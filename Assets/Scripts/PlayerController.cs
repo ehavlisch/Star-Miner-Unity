@@ -90,19 +90,27 @@ public class PlayerController : MonoBehaviour {
 			angularVector = new Vector3(0, 0, 0);
 		}
 		
-		
+		//Bug - after moving, the player will be able to dampen and burn fuel even while sitting still
+		//Fix - when the speed falls below a threshold, zero it out 
+		//Temp fix - when they player's velocity is slow, free fuel (does not consider angular)
+
 		//Check if there's enough fuel to do it
 		float forceTotal = Mathf.Abs (movement.x) + Mathf.Abs (movement.z) + Mathf.Abs (angularVector.y);
-		Debug.Log (forceTotal + " X: " + movement.x + " Z: " + movement.z + " Y: " + angularVector.y);
+		//Debug.Log (forceTotal + " X: " + movement.x + " Z: " + movement.z + " Y: " + angularVector.y);
 
-		float fuelCost = forceTotal / ship.calculateEngineEfficiency ();
-		float fuelShortage = ship.subtractFuel (fuelCost);
+		if (rigidBody.velocity.magnitude > .05) {
+			//Debug.Log ("High velocity - subtract fuel");
+			float fuelCost = forceTotal / ship.calculateEngineEfficiency ();
+			float fuelShortage = ship.subtractFuel (fuelCost);
 
-		if (fuelShortage > 0) {
-			float fuelScalar = ((fuelCost - fuelShortage) / fuelCost);
-			movement *= fuelScalar;
-			angularVector *= fuelScalar;
-		} 
+			if (fuelShortage > 0) {
+				float fuelScalar = ((fuelCost - fuelShortage) / fuelCost);
+				movement *= fuelScalar;
+				angularVector *= fuelScalar;
+			}
+		} else {
+			//Debug.Log("Low Velocity (" + rigidBody.velocity.magnitude + ") - free fuel");
+		}
 
 		rigidBody.AddForce (movement);
 		rigidBody.AddTorque (angularVector);
