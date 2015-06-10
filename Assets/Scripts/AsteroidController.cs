@@ -12,6 +12,8 @@ public class AsteroidController : MonoBehaviour {
 
 	private bool firstFrame;
 
+	private IntVector2 location;
+
 	public void Start() {
 		firstFrame = true;
 
@@ -61,7 +63,13 @@ public class AsteroidController : MonoBehaviour {
 	}
 
 	public void FixedUpdate() {
-		if (health < 0) {		
+		if (health < 0) {
+			// If the object has a world location delete it,
+			if(location != null) {
+				world.destroy(location);
+			} else {
+				//TODO this should delete from the worlds miscObjects buckets
+			}
 			if(maxHealth > 200) {
 				int splits = Mathf.FloorToInt (maxHealth/200);
 				for(int i = 0; i <= splits; i++) {
@@ -113,5 +121,9 @@ public class AsteroidController : MonoBehaviour {
 
 	public Rigidbody getRigidbody() {
 		return GetComponentInChildren<Rigidbody> ();
+	}
+
+	public void setLocation(IntVector2 location) {
+		this.location = location;
 	}
 }

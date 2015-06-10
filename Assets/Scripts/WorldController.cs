@@ -4,6 +4,8 @@ using System.Collections;
 public class WorldController : MonoBehaviour {
 
 	private float[,] map;
+	private bool[,] deleted;
+
 	public int size;
 	private float flux;
 
@@ -107,7 +109,7 @@ public class WorldController : MonoBehaviour {
 					GameObject asteroidObject = (GameObject) Instantiate (getAsteroid(), position , rotation);
 					asteroidObject.transform.parent = this.transform;
 					AsteroidController asteroid = (AsteroidController) asteroidObject.GetComponent ("AsteroidController");
-
+					asteroid.setLocation(new IntVector2(mapI, mapJ));
 					asteroid.setValue(map[mapI, mapJ]);
 					asteroid.setWorld (this);
 				}
@@ -154,6 +156,7 @@ public class WorldController : MonoBehaviour {
 	private float generateMap() {
 
 		map = new float[size, size];
+		deleted = new bool[size,size];
 
 		//IntVector2 start = new IntVector2 (150, 150);
 
@@ -378,6 +381,21 @@ public class WorldController : MonoBehaviour {
 		} 
 		Debug.Log ("Shouldn't get here?");
 		return 0;
+	}
+
+	/*
+	 * Methods for updated the world state
+	*/
+	public void destroy(IntVector2 location) {
+		deleted [location.x, location.y] = true;
+	}
+
+	public void addObject() {
+
+	}
+
+	public void updateObject() {
+
 	}
 }
 

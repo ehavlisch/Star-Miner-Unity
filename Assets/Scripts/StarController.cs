@@ -3,12 +3,15 @@ using System.Collections;
 
 public class StarController : MonoBehaviour {
 
-	public float collisionRadius;
+	private float collisionRadius;
 
 	private float scale;
 	private float gravityWellSize;
 
 	public void Start() {
+		if (collisionRadius == 0) {
+			collisionRadius = 20;
+		}
 		GetComponent<SphereCollider> ().radius = collisionRadius;
 		scale = this.transform.localScale.x;
 		gravityWellSize = scale * collisionRadius;

@@ -45,7 +45,7 @@ public class ShipController : MonoBehaviour {
 		fuelTanks.Add (new FuelTank (new FuelType (1, 100), 100, 100, 5, 100));	
 		maxFuel = calculateMaxFuelVolume ();
 
-		engines.Add (new Engine (100, 400, 20, 200, 15, 100, 1000, "Basic Engine"));
+		engines.Add (new Engine (100, 1600, 80, 800, 60, 100, 1000, "Basic Engine"));
 
 		generators.Add (new Generator (20, 30, 1f, 100, 1000, "Basic Generator"));
 		maxEnergy = calculateTotalMaxEnergy ();
