@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 
 public class WorldNode {
 	/*
@@ -74,32 +75,6 @@ public class WorldNode {
 	
 	public int getWorldNodeId() {
 		return worldNodeId;
-	}
-	
-	public void fill() {
-		mapChunk.reFill();
-	}
-
-	//TODO this is supposed to return this instance	
-	public void load() {
-		if(!mapChunk.isFilled()) {
-			mapChunk.reFill();
-		}
-		//return this;
-	}
-
-	
-	public void unload() {
-		if(mapChunk.isFilled()) {
-			mapChunk.empty();
-		}
-	}
-	
-	public bool isLoaded() {
-		if(mapChunk == null || !mapChunk.isFilled()) {
-			return false;
-		} 
-		return true;
 	}
 	
 	public void printRows(StringBuilder[] sbs) {
