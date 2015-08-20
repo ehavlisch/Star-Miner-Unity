@@ -17,6 +17,28 @@ public class WorldNode {
 	
 	private int worldNodeId;
 
+	public Boolean isLoaded() {
+		//TODO one line this bitch
+		if(mapChunk == null || !mapChunk.isFilled()) {
+			return false;
+		} 
+		return true;
+	}
+
+	public Boolean load() {
+		if(!mapChunk.isFilled()) {
+			mapChunk.reFill();
+			return true;
+		}
+		return false;
+	}
+	
+	public void unload() {
+		if(mapChunk.isFilled()) {
+			mapChunk.empty();
+		}
+	}
+
 	public WorldNode(int worldNodeId) {
 		this.worldNodeId = worldNodeId;
 	}
@@ -79,5 +101,15 @@ public class WorldNode {
 	
 	public void printRows(StringBuilder[] sbs) {
 		mapChunk.printRows(sbs);
+	}
+
+	public WorldNode get(Direction direction) {
+		switch(direction) {
+		case Direction.UP: return up;
+		case Direction.DOWN: return down;
+		case Direction.LEFT: return left;
+		case Direction.RIGHT: return right;
+		default: return null;
+		}
 	}
 }

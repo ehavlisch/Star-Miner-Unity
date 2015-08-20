@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Text;
 public class MapChunk {
 
 	// Required for regeneration
-	private long randomSeed;
+	private int randomSeed;
 	private int worldNodeId;
 
 
@@ -29,7 +30,7 @@ public class MapChunk {
 	private Queue<IntVector2> toDo;
 	private bool[,] mapWritten;
 	private bool[,] mapPending;
-	private Random random;
+	private UnityEngine.Random random;
 
 	// should default to false
 	private bool filled = false;
@@ -39,12 +40,13 @@ public class MapChunk {
 
 	int count;
 
-	public MapChunk(int size, float startValue, float flux, long randomSeed, int worldNodeId) {
+	public MapChunk(int size, float startValue, float flux, int randomSeed, int worldNodeId) {
 		this.size = size;
 		this.flux = flux;
 		this.startValue = startValue;
 		int start = (int) Mathf.Floor(size/2);
 		this.randomSeed = randomSeed;
+		UnityEngine.Random.seed = randomSeed;
 		this.worldNodeId = worldNodeId;
 		isRoot = true;
 		
@@ -62,7 +64,7 @@ public class MapChunk {
 		//printMap();
 	}
 
-	public MapChunk(int size, int flux, MapChunk[] neighbors, int[] locations, long randomSeed, int worldNodeId) {
+	public MapChunk(int size, float flux, MapChunk[] neighbors, int[] locations, int randomSeed, int worldNodeId) {
 		this.randomSeed = randomSeed;
 		this.worldNodeId = worldNodeId;
 		this.size = size;
@@ -123,7 +125,7 @@ public class MapChunk {
 
 	private void init() {
 		toDo = new Queue<IntVector2>();
-		map = new int[size, size];
+		map = new float[size, size];
 		mapWritten = new bool[size, size];
 		mapPending = new bool[size, size];
 		buckets = new float[10];
@@ -166,8 +168,45 @@ public class MapChunk {
 		*/
 	}
 
-	public float getMap(int x, int y) {
-		return map [x, y];
+	public void reFill() {
+		Debug.Log ("refilling?");
+		init();
+		if(toDo.Count == 0) {
+			if(isRoot) {
+				int start = (int) Mathf.Floor(size/2);
+				
+				map[start, start] = startValue;
+				mapWritten[start, start] = true;
+				
+				addAdjacent(start, start);
+			} else {
+				
+				if(top != null) {
+					for(int j = 0; j < size; j++) {
+						toDo.Enqueue(new IntVector2(j, 0));
+					}
+				}
+				if(bot != null) {
+					for(int j = 0; j < size; j++) {
+						toDo.Enqueue(new IntVector2(j, size - 1));
+					}
+				}
+				if(left != null) {
+					for(int j = 0; j < size; j++) {
+						toDo.Enqueue(new IntVector2(0, j));
+					}
+				}
+				if(right != null) {
+					for(int j = 0; j < size; j++) {
+						toDo.Enqueue(new IntVector2(size - 1, j));
+					}
+				}
+			}
+			if(toDo.Count == 0) {
+				Debug.Log("Cannot fill MapChunk, toDo list is empty");
+			}
+			generateMap();
+		}
 	}
 
 	private float generateMap() {
@@ -175,8 +214,8 @@ public class MapChunk {
 
 			IntVector2 pos = (IntVector2)toDo.Dequeue ();
 
-			if (map [pos.x, pos.y] > 0) {
-				Debug.Log ("Position value already set!!!");
+			if (mapWritten [pos.x, pos.y]) {
+				//Debug.Log ("Position value already set!!!");
 				continue;
 			}
 
@@ -188,9 +227,20 @@ public class MapChunk {
 			mapWritten[pos.x, pos.y] = true;
 		}	
 		
-		Debug.Log ("Done Generating map - " + count + " created.");
+		//Debug.Log ("Done Generating map - " + count + " created.");
+
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				if(!mapWritten[i, j]) {
+					Debug.Log ("Not written: (" + i + ", " + j + ")");
+				}
+			}
+		}
+		filled = true;
 		return size * size;
 	}
+
+
 
 	private void getDistributionOkValue(IntVector2 pos, float avg) {
 		int distributionOk = 0;
@@ -203,8 +253,8 @@ public class MapChunk {
 		while (map[pos.x, pos.y] <= 0.0f || map[pos.x, pos.y] >= 1.0f || (distributionOk = this.checkPercentages (map[pos.x, pos.y],buckets,count)) > 0) {
 			loopCounts ++;
 			if (loopCounts > size * size) {
-				Debug.Log ("Reached loopCounts!");
-				return count;
+				Debug.Log ("SEVERE: Reached loopCounts!" + distributionOk);
+				return;
 			}
 			if (distributionOk == 1) {
 				// High end - increase negative flux, decrease positive flux
@@ -230,7 +280,7 @@ public class MapChunk {
 				//return count;
 			}
 			
-			map [pos.x, pos.y] = Random.Range (lowerBound, upperBound);
+			map [pos.x, pos.y] = UnityEngine.Random.Range (lowerBound, upperBound);
 		}
 	}
 
@@ -239,20 +289,20 @@ public class MapChunk {
 	}
 
 	private void addAdjacent(int x, int y) {
-		if(x - 1 >= 0 && !mapPending[x - 1][y]) {
-			mapPending[x - 1][y] = true;
+		if(x - 1 >= 0 && !mapPending[x - 1, y]) {
+			mapPending[x - 1, y] = true;
 			toDo.Enqueue(new IntVector2(x - 1, y));
 		}
-		if(x + 1 < size && !mapPending[x + 1][y]) {
-			mapPending[x + 1][y] = true;
+		if(x + 1 < size && !mapPending[x + 1, y]) {
+			mapPending[x + 1, y] = true;
 			toDo.Enqueue(new IntVector2(x + 1, y));
 		}
-		if(y - 1 >= 0 && !mapPending[x][y - 1]) {
-			mapPending[x][y - 1] = true;
+		if(y - 1 >= 0 && !mapPending[x, y - 1]) {
+			mapPending[x, y - 1] = true;
 			toDo.Enqueue(new IntVector2(x, y - 1));
 		}
-		if(y + 1 < size && !mapPending[x][y + 1]) {
-			mapPending[x][y + 1] = true;
+		if(y + 1 < size && !mapPending[x, y + 1]) {
+			mapPending[x, y + 1] = true;
 			toDo.Enqueue(new IntVector2(x, y + 1));
 		}
 	}
@@ -261,32 +311,32 @@ public class MapChunk {
 		float avg = 0.0f;
 		int count = 0;
 		
-		if(x - 1 >= 0 && mapWritten[x - 1][y]) {
-			avg += map[x - 1][y];
+		if(x - 1 >= 0 && mapWritten[x - 1, y]) {
+			avg += map[x - 1, y];
 			count++;
 		} else if(left != null) {
 			avg += left[y];
 			count++;
 		}
 		
-		if(x + 1 < size - 1 && mapWritten[x + 1][y]) {
-			avg += map[x + 1][y];
+		if(x + 1 < size - 1 && mapWritten[x + 1, y]) {
+			avg += map[x + 1, y];
 			count++;
 		} else if(right != null) {
 			avg += right[y];
 			count++;
 		}
 		
-		if(y - 1 >= 0 && mapWritten[x][y - 1]) {
-			avg += map[x][y - 1];
+		if(y - 1 >= 0 && mapWritten[x, y - 1]) {
+			avg += map[x, y - 1];
 			count++;
 		} else if(top != null) {
 			avg += top[x];
 			count++;
 		}
 		
-		if(y + 1 < size - 1 && mapWritten[x][y + 1]) {
-			avg += map[x][y + 1];
+		if(y + 1 < size - 1 && mapWritten[x, y + 1]) {
+			avg += map[x, y + 1];
 			count++;
 		} else if(bot != null) {
 			avg += bot[x];
@@ -398,12 +448,33 @@ public class MapChunk {
 	public void printRows(StringBuilder[] sbs) {
 		for(int i = 0; i < size; i++) {
 			for(int j = 0; j < size; j++) {
-				sbs[i].Append(getChars(map[i][j]));
+				sbs[i].Append(getChars(map[i, j]));
 			}
 		}
 	}
 
+	public void empty() {
+		toDo = null;
+		map = null;
+		mapWritten = null;
+		mapPending = null;
+		random = null;
+		filled = false;
+	}
+
+	public float getMap(IntVector2 v) {
+		return map [v.x, v.y];
+	}
+
+	public float getMap(int x, int y) {
+		return map [x, y];
+	}
+
 	public float[,] getMap() {
 		return map;
+	}
+
+	public Boolean isFilled() {
+		return filled;
 	}
 }

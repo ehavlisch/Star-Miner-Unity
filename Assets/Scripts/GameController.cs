@@ -4,13 +4,11 @@ using UnityEngine.UI;
 
 public class GameController : MonoBehaviour {
 
-	public Text shieldText;
-	public Text hullText;
-	public Text fuelText;
-
 	public Camera mainCamera;
 
 	public PlayerController player;
+	public WorldController worldController;
+	public UIController uiController;
 
 	bool showMenu = false;
 
@@ -19,21 +17,25 @@ public class GameController : MonoBehaviour {
 
 		//TODO programatically create player, starting ship, and attach main camera;
 		//player = new PlayerController ();
+
+		UnityEngine.Random.seed = 150;
+
+		worldController.generateWorld ();
+
+		worldController.printWorld ();
 	}
 
 	void FixedUpdate() {
-		shieldText.text = Mathf.FloorToInt(player.ship.getEnergy ()) + " / " + player.ship.getMaxEnergy ();
-		hullText.text = Mathf.FloorToInt(player.ship.getHull ()) + " / " + player.ship.maxHull;
-		fuelText.text = Mathf.FloorToInt (player.ship.calculateFuelVolume ()) + " / " + player.ship.getMaxFuel();
+		uiController.update (player);
 	}
 
 	void Update() {
-		if(Input.GetButtonDown("menu"))
-			showMenu = toggleMenu();
+		if (Input.GetButtonDown ("menu")) {
+			showMenu = toggleMenu ();
+		}
 	}
 
 	void OnGUI() {
-
 		if(showMenu) {
 			if(GUILayout.Button("Resume")) {
 				showMenu = toggleMenu();
@@ -47,9 +49,7 @@ public class GameController : MonoBehaviour {
 			return(false);
 		} else {
 			Time.timeScale = 0;
-			shieldText.text = "";
-			hullText.text = "";
-			fuelText.text = "";
+			uiController.disable();
 			return true;  
 		}
 	}

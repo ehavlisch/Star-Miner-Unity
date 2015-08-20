@@ -66,7 +66,8 @@ public class AsteroidController : MonoBehaviour {
 		if (health < 0) {
 			// If the object has a world location delete it,
 			if(location != null) {
-				world.destroy(location);
+				//TODO this should mark the location as deleted
+				//world.destroy(location);
 			} else {
 				//TODO this should delete from the worlds miscObjects buckets
 			}
