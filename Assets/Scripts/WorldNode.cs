@@ -43,7 +43,7 @@ public class WorldNode {
 		this.worldNodeId = worldNodeId;
 	}
 	
-	public String toString() {
+	public string tostring() {
 		return "World Node: " + location;
 	}
 	

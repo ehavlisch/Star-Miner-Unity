@@ -7,22 +7,22 @@ public class ShipController : MonoBehaviour {
 	public float mass;
 
 	public int maxFuelTanks;
-	private ArrayList fuelTanks;
+	private List<FuelTank> fuelTanks;
 
 	private float maxFuel;
 
 	public int maxEngines;
-	private ArrayList engines;
+	private List<Engine> engines;
 
 	public int maxGenerators;
-	private ArrayList generators;
+	private List<Generator> generators;
 
 	public int maxWeapons;
 	private WeaponController[] weapons;
 	private Transform[] shotSpawns;
 
 	private int maxCargoBays;
-	private ArrayList cargoBays;
+	private List<CargoBay> cargoBays;
 
 	private float energy;
 	private float maxEnergy;
@@ -37,10 +37,10 @@ public class ShipController : MonoBehaviour {
 		maxGenerators = 2;
 		maxCargoBays = 4;
 		maxWeapons = 2;
-		fuelTanks = new ArrayList (maxFuelTanks);
-		engines = new ArrayList (maxEngines);
-		generators = new ArrayList (maxGenerators);
-		cargoBays = new ArrayList (maxCargoBays);
+		fuelTanks = new List<FuelTank> (maxFuelTanks);
+		engines = new List<Engine> (maxEngines);
+		generators = new List<Generator> (maxGenerators);
+		cargoBays = new List<CargoBay> (maxCargoBays);
 
 		fuelTanks.Add (new FuelTank (new FuelType (1, 100), 100, 100, 5, 100));	
 		maxFuel = calculateMaxFuelVolume ();
@@ -299,7 +299,7 @@ public class Generator : Cargo {
 public class CargoBay : Cargo {
 
 	public float filledVolume;
-	public ArrayList cargo;
+	public List<Cargo> cargo;
 
 	public CargoBay(float volume, float mass, float value, string name) {
 		this.volume = volume;
@@ -307,7 +307,7 @@ public class CargoBay : Cargo {
 		this.value = value;
 		this.name = name;
 
-		cargo = new ArrayList ();
+		cargo = new List<Cargo> ();
 	}
 
 	public bool addCargo(Cargo c) {

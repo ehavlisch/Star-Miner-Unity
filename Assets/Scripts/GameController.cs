@@ -23,6 +23,7 @@ public class GameController : MonoBehaviour {
 		worldController.generateWorld ();
 
 		worldController.printWorld ();
+		worldController.printWorldNodes ();
 	}
 
 	void FixedUpdate() {

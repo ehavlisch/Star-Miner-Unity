@@ -40,6 +40,7 @@ public class MapChunk {
 
 	int count;
 
+	/*
 	public MapChunk(int size, float startValue, float flux, int randomSeed, int worldNodeId) {
 		this.size = size;
 		this.flux = flux;
@@ -60,67 +61,88 @@ public class MapChunk {
 
 		// Use the other fill logic below to populate a map based on percentages of materials
 		generateMap();
-
-		//printMap();
 	}
+	*/
 
 	public MapChunk(int size, float flux, MapChunk[] neighbors, int[] locations, int randomSeed, int worldNodeId) {
-		this.randomSeed = randomSeed;
-		this.worldNodeId = worldNodeId;
 		this.size = size;
 		this.flux = flux;
-		
-		init();
-		
-		if(neighbors.Length == 0 || neighbors.Length != locations.Length) {
-			//System.out.println("Invalid MapChunk Neighbors");
-			Debug.Log ("Invalid MapChunk Neighbors");
-			return;
-		}
-		
-		for(int i = 0; i < neighbors.Length; i++) {
-			MapChunk neighbor = neighbors[i];
-			switch(locations[i]) {
-			case 1: {
-				top = new float[size];
-				for(int j = 0; j < size; j++) {
-					top[j] = neighbor.getMap()[j, size - 1];
-					toDo.Enqueue(new IntVector2(j, 0));
-				}
-				break;
-			}
-			case 2: {
-				left = new float[size];
-				for(int j = 0; j < size; j++) {
-					left[j] = neighbor.getMap()[0, j];
-					toDo.Enqueue(new IntVector2(0, j));
-				}
-				break;
-			}
-			case 3: {
-				right = new float[size];
-				for(int j = 0; j < size; j++) {
-					right[j] = neighbor.getMap()[size - 1, j];
-					toDo.Enqueue(new IntVector2(size - 1, j));
-				}
-				break;
-			}
-			case 4: {
-				bot = new float[size];
-				for(int j = 0; j < size; j++) {
-					bot[j] = neighbor.getMap()[0, j];
-					toDo.Enqueue(new IntVector2(j, size - 1));
-				}
-				break;
-			}
-			default: {
-				Debug.Log ("Invalid location value in locations array");
+		this.randomSeed = randomSeed;
+		this.worldNodeId = worldNodeId;
+		init ();
+
+		if (worldNodeId == 0) {
+			int start = (int) Mathf.Floor(size/2);
+			UnityEngine.Random.seed = randomSeed;
+
+			map[start, start] = startValue;
+			mapPending [start, start] = true;
+			mapWritten[start, start] = true;
+
+			addAdjacent(start, start);
+			isRoot = true;
+			generateMap();
+		} else {
+			
+			if (neighbors.Length == 0 || neighbors.Length != locations.Length) {
+				//System.out.println("Invalid MapChunk Neighbors");
+				Debug.Log ("Invalid MapChunk Neighbors");
 				return;
-				//throw new Exception("Invalid location value in locations array");
 			}
-			}
-		}	
-		generateMap ();
+			
+			for (int i = 0; i < neighbors.Length; i++) {
+				MapChunk neighbor = neighbors [i];
+				switch (locations [i]) {
+				case 1:
+					{
+						//Debug.Log ("Adding right col of neighbor to the left, enque left col into toDo");
+						left = new float[size];
+						for (int j = 0; j < size; j++) {
+							left [j] = neighbor.getMap () [j, size - 1];
+							toDo.Enqueue (new IntVector2 (j, 0));
+						}
+						break;
+					}
+				case 2:
+					{
+						//Debug.Log ("Adding bot row of neighbor on top, enque top row into toDo");
+						top = new float[size];
+						for (int j = 0; j < size; j++) {
+							top [j] = neighbor.getMap () [size - 1, j];
+							toDo.Enqueue (new IntVector2 (0, j));
+						}
+						break;
+					}
+				case 3:
+					{
+						//Debug.Log ("Adding top row of neighbor below, enque bot row into toDo");
+						bot = new float[size];
+						for (int j = 0; j < size; j++) {
+							bot [j] = neighbor.getMap () [0, j];
+							toDo.Enqueue (new IntVector2 (size - 1, j));
+						}
+						break;
+					}
+				case 4:
+					{
+						//Debug.Log ("Adding left col of neighbor to the right, enque the right col into toDo");
+						right = new float[size];
+						for (int j = 0; j < size; j++) {
+							right [j] = neighbor.getMap () [j, 0];
+							toDo.Enqueue (new IntVector2 (j, size - 1));
+						}
+						break;
+					}
+				default:
+					{
+						Debug.Log ("Invalid location value in locations array");
+						return;
+						//throw new Exception("Invalid location value in locations array");
+					}
+				}
+			}	
+			generateMap ();
+		}
 	}
 
 	private void init() {
@@ -210,6 +232,26 @@ public class MapChunk {
 	}
 
 	private float generateMap() {
+		/*
+		if (top != null) {
+			Debug.Log ("Top top set.");
+		}
+		if (bot != null) {
+			Debug.Log ("Bot row set.");
+		}
+		if (left != null) {
+			Debug.Log ("Left Col set.");
+		}
+		if (right != null) {
+			Debug.Log ("Right col set.");
+		}
+		*/
+		if(!isRoot && top == null && bot == null && left == null && right == null) {
+			Debug.Log ("SEVERE: Trying to generate a map chunk with no neighbors.");
+		}
+
+		Debug.Log ("Filling a mapchunk");
+
 		while (toDo.Count > 0) {
 
 			IntVector2 pos = (IntVector2)toDo.Dequeue ();
@@ -221,18 +263,23 @@ public class MapChunk {
 
 			count++;
 			addAdjacent (pos);
-			float avg = this.avgAdjacent (pos.x, pos.y);
+			float avg = avgAdjacent (pos.x, pos.y);
 
 			getDistributionOkValue(pos, avg);
 			mapWritten[pos.x, pos.y] = true;
-		}	
-		
-		//Debug.Log ("Done Generating map - " + count + " created.");
+		}
 
-		for (int i = 0; i < size; i++) {
-			for (int j = 0; j < size; j++) {
-				if(!mapWritten[i, j]) {
-					Debug.Log ("Not written: (" + i + ", " + j + ")");
+		if (isRoot) {
+			count++;
+		}
+		
+		if (count != size * size) {
+			Debug.Log ("Done Generating map - " + count + " created.");
+			for (int i = 0; i < size; i++) {
+				for (int j = 0; j < size; j++) {
+					if (!mapWritten [i, j]) {
+						Debug.Log ("Not written: (" + i + ", " + j + ")");
+					}
 				}
 			}
 		}
@@ -250,10 +297,13 @@ public class MapChunk {
 		float lowerBound = avg - flux;
 		float upperBound = avg + flux;
 		
-		while (map[pos.x, pos.y] <= 0.0f || map[pos.x, pos.y] >= 1.0f || (distributionOk = this.checkPercentages (map[pos.x, pos.y],buckets,count)) > 0) {
+		while (map[pos.x, pos.y] <= 0.0f || map[pos.x, pos.y] >= 1.0f 
+		       //Some issues with this right now, we hit loop counts a bunch even with check percentages running only after a certain period of time
+		       || (distributionOk = checkPercentages (map[pos.x, pos.y],buckets,count)) > 0
+		       ) {
 			loopCounts ++;
 			if (loopCounts > size * size) {
-				Debug.Log ("SEVERE: Reached loopCounts!" + distributionOk);
+				Debug.Log ("SEVERE: Reached loopCounts! " + distributionOk);
 				return;
 			}
 			if (distributionOk == 1) {
@@ -307,39 +357,45 @@ public class MapChunk {
 		}
 	}
 
+	// ROW, COLUMN 
 	private float avgAdjacent(int x, int y) {
 		float avg = 0.0f;
 		int count = 0;
-		
-		if(x - 1 >= 0 && mapWritten[x - 1, y]) {
+
+		// looking at row above
+		if(x > 0 && mapWritten[x - 1, y]) {
 			avg += map[x - 1, y];
 			count++;
-		} else if(left != null) {
-			avg += left[y];
+		} else if(x == 0 && top != null) {
+			// x == 0 redundant?
+			avg += top[y];
 			count++;
 		}
-		
+
+		// looking at row below
 		if(x + 1 < size - 1 && mapWritten[x + 1, y]) {
 			avg += map[x + 1, y];
 			count++;
-		} else if(right != null) {
-			avg += right[y];
+		} else if(bot != null) {
+			avg += bot[y];
 			count++;
 		}
-		
+
+		// looking at column left
 		if(y - 1 >= 0 && mapWritten[x, y - 1]) {
 			avg += map[x, y - 1];
 			count++;
-		} else if(top != null) {
-			avg += top[x];
+		} else if(right != null) {
+			avg += right[x];
 			count++;
 		}
-		
+
+		// looking at column right
 		if(y + 1 < size - 1 && mapWritten[x, y + 1]) {
 			avg += map[x, y + 1];
 			count++;
-		} else if(bot != null) {
-			avg += bot[x];
+		} else if(left != null) {
+			avg += left[x];
 			count++;
 		}
 		
@@ -347,7 +403,6 @@ public class MapChunk {
 	}
 
 	private int checkPercentages(float var, float[] b, float count) {
-
 		if(var == 1.0) {
 			if((1.0f + b[10])/count * 100 > 1 && count > size) {
 				return 1;

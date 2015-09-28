@@ -25,8 +25,6 @@ public class AsteroidController : MonoBehaviour {
 	public void initialize() {
 		float scale = calculateScale (value);
 
-
-
 		health = 300 * scale + 10 + Random.Range (0, 50);
 		maxHealth = health;
 		GetComponent <Rigidbody> ().mass = health;

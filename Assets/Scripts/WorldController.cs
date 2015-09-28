@@ -39,11 +39,11 @@ public class WorldController : MonoBehaviour {
 	public void generateWorld() {
 		init ();
 		generateSystem ();
-		newWorld (30, 10, 0.5f, 0.02f);
+		newWorld (25, 10, 0.5f, 0.02f);
 	}
 
 	private void init () {
-		asteroids = new ArrayList ();
+		asteroids = new List ();
 		asteroids.Add (Resources.Load ("Asteroid01"));
 		asteroids.Add (Resources.Load ("Asteroid02"));
 		asteroids.Add (Resources.Load ("Asteroid03"));
@@ -53,17 +53,18 @@ public class WorldController : MonoBehaviour {
 		asteroids.Add (Resources.Load ("Asteroid07"));
 		//asteroids.Add (Resources.Load ("Asteroid08"));
 		
-		planets = new ArrayList ();
+		planets = new List ();
 		planets.Add (Resources.Load ("Planet01"));
 		
-		stars = new ArrayList ();
+		stars = new List ();
 		stars.Add (Resources.Load ("Star01"));
+
 	}
 	
 	// Generates Planets
 	private void generateSystem() {
-		GameObject starObject = (GameObject)Instantiate (getStar (), new Vector3 (0, 0, 0), Quaternion.identity);
-		starObject.transform.parent = this.transform;
+		//GameObject starObject = (GameObject)Instantiate (getStar (), new Vector3 (0, 0, 0), Quaternion.identity);
+		//starObject.transform.parent = this.transform;
 		
 		int distanceFromSun = 100;
 	
@@ -88,21 +89,19 @@ public class WorldController : MonoBehaviour {
 		worldNodeSize = chunkSize * chunkSpread;
 		this.flux = flux;
 
-		int worldNodeId = worldNodeCount++;
-		MapChunk rootChunk = new MapChunk (chunkSize, startValue, flux, randomSeed, worldNodeId);
-		root = new WorldNode (worldNodeId);
-		root.setMapChunk (rootChunk);
-
 		worldSize = 2 * (loadSize * 2 + 1) + 1;
-		worldArray = new WorldNode[worldSize, worldSize];
 		int worldCenter = (int)Mathf.Floor (worldSize / 2);
+		
+		worldArray = new WorldNode[worldSize,worldSize];
+		worldShift = new IntVector2 (worldCenter, worldCenter);
+
+		root = getChunk (new IntVector2 (worldCenter, worldCenter));
+
+		worldArray = new WorldNode[worldSize, worldSize];
 		worldArray [worldCenter, worldCenter] = root;
 		root.setLocation (new IntVector2 (worldCenter, worldCenter));
 
 		playerChunk = new IntVector2 (0, 0);
-		worldShift = new IntVector2 (worldCenter, worldCenter);
-
-		Debug.Log ("Generating the base chunks");
 		loadAdjacentChunks(Direction.NONE);
 	}
 
@@ -158,7 +157,8 @@ public class WorldController : MonoBehaviour {
 					if(dir == Direction.NONE) {
 						continue;
 					}
-					getChunk(new IntVector2(location.x + dir.getPair().x * i, location.y + dir.getPair().y * i));
+					IntVector2 newChunk = new IntVector2(location.x + dir.getPair().x * i, location.y + dir.getPair().y * i);
+					getChunk(newChunk);
 				}
 				
 				// for each direction
@@ -171,7 +171,7 @@ public class WorldController : MonoBehaviour {
 					int skip = 0;
 					for(int j = 0; j < i; j++) {
 						for(int k = 0; k < skip; k++) {
-							targetNode=targetNode.get(dir.perpOne());
+							targetNode = targetNode.get(dir.perpOne());
 						}
 						
 						getChunk(new IntVector2(targetNode.getLocation().x + dir.perpOne().getPair().x, targetNode.getLocation().y + dir.perpOne().getPair().y));
@@ -179,7 +179,7 @@ public class WorldController : MonoBehaviour {
 						targetNode = cardinalNode;
 						if(i - j > 1) {
 							for(int k = 0; k < skip; k++) {
-								targetNode=targetNode.get(dir.perpTwo());
+								targetNode = targetNode.get(dir.perpTwo());
 							}
 							
 							getChunk(new IntVector2(targetNode.getLocation().x + dir.perpTwo().getPair().x, targetNode.getLocation().y + dir.perpTwo().getPair().y));
@@ -312,12 +312,15 @@ public class WorldController : MonoBehaviour {
 			int shiftDown = (int) Mathf.Floor(worldSize * shiftFactor);
 			location = shift(shiftRight, shiftDown, location);
 		}
-		
-		if(worldArray[location.x, location.y] != null) {
-			WorldNode worldNode = worldArray[location.x, location.y];
-			worldNode.load ();
-			instantiateWorldNodeObjects(worldNode);
-			return worldNode;
+		WorldNode worldNode = worldArray [location.x, location.y];
+		if (worldNode != null) {
+			if(worldNode.isLoaded ()) {
+				return worldNode;
+			} else {
+				worldNode.load ();
+				instantiateWorldNodeObjects(worldNode);
+				return worldNode;
+			}
 		} else {
 			int worldNodeId = worldNodeCount++;
 			WorldNode newWorldNode = new WorldNode(worldNodeId);
@@ -325,8 +328,9 @@ public class WorldController : MonoBehaviour {
 
 			List<MapChunk> neighbors = new List<MapChunk>();
 			List<int> neighborLocations = new List<int>();
-			
+			// X: Row, Y: Column
 			if(location.y - 1 >= 0 && worldArray[location.x, location.y - 1] != null) {
+				//Debug.Log ("Neighbor Left - loading from row:" + location.x + ", col:" + (location.y - 1) + ".");
 				neighborLocations.Add(1);
 				neighbors.Add(worldArray[location.x, location.y - 1].getMapChunk());
 				worldArray[location.x, location.y - 1].setRight(newWorldNode);
@@ -334,6 +338,7 @@ public class WorldController : MonoBehaviour {
 			}
 			
 			if(location.x - 1 >= 0 && worldArray[location.x - 1, location.y] != null) {
+				//Debug.Log ("Neighbor Above - loading from row:" + (location.x - 1) + ", col:" + location.y + ".");
 				neighborLocations.Add(2);
 				neighbors.Add(worldArray[location.x - 1, location.y].getMapChunk());
 				worldArray[location.x - 1, location.y].setDown(newWorldNode);
@@ -341,6 +346,7 @@ public class WorldController : MonoBehaviour {
 			}
 			
 			if(location.x + 1 < worldSize && worldArray[location.x + 1, location.y] != null) {
+				//Debug.Log ("Neighbor Below - loading from row:" + (location.x + 1) + ", col:" + location.y + ".");
 				neighborLocations.Add(3);
 				neighbors.Add(worldArray[location.x + 1, location.y].getMapChunk());
 				worldArray[location.x + 1, location.y].setUp(newWorldNode);
@@ -348,6 +354,7 @@ public class WorldController : MonoBehaviour {
 			}
 			
 			if(location.y + 1 < worldSize && worldArray[location.x, location.y + 1] != null) {
+				//Debug.Log ("Neighbor Right - loading from row:" + location.x + ", col:" + (location.y + 1) + ".");
 				neighborLocations.Add(4);
 				neighbors.Add(worldArray[location.x, location.y + 1].getMapChunk());
 				worldArray[location.x, location.y + 1].setLeft(newWorldNode);
@@ -373,18 +380,25 @@ public class WorldController : MonoBehaviour {
 		//		System.out.println("Actual Center: " + actualCenter);
 		//		System.out.println("Generating objects from: " + (actualCenter.x - halfSpreadSize) + " to " + (actualCenter.x + halfSpreadSize) + ".");
 		//		System.out.println("Generating objects from: " + (actualCenter.y - halfSpreadSize) + " to " + (actualCenter.y + halfSpreadSize) + ".");
-		
+
 		for(int i = 0; i < chunkSize; i++) {
 			for(int j = 0; j < chunkSize; j++) {
 				float value = worldNode.getMapChunk().getMap()[i, j];
-				if(value > 5000) {
 					// Instantiate or something
-					IntVector2 location = new IntVector2(actualCenter.x - halfSpreadSize + i * chunkSpread, actualCenter.y - halfSpreadSize + j * chunkSpread);
-					// To avoid warning
-					if(location != null) {
-						
-					}
-					//					System.out.println(location);
+				if(value >= .45 && value <= .55) {
+
+					float randomX = UnityEngine.Random.Range(-1.0f, 1.0f) * chunkSpread / 2;
+					float randomZ = UnityEngine.Random.Range(-1.0f, 1.0f) * chunkSpread / 2;
+					Vector3 location = new Vector3(actualCenter.x - halfSpreadSize + i * chunkSpread + randomX, 0, actualCenter.y - halfSpreadSize + j * chunkSpread + randomZ);
+
+					Quaternion rotation = new Quaternion(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
+
+					GameObject asteroidObject = (GameObject) Instantiate (getAsteroid(), location , rotation);
+					asteroidObject.transform.parent = this.transform;
+					AsteroidController asteroid = (AsteroidController) asteroidObject.GetComponent ("AsteroidController");
+					asteroid.setLocation(new IntVector2(i, j));
+					asteroid.setValue(value);
+					asteroid.setWorld (this);
 				}
 			}
 		}
@@ -427,7 +441,7 @@ public class WorldController : MonoBehaviour {
 	}
 	
 	public void printWorldNodes() {
-		StringBuilder worldString = new StringBuilder ();
+		StringBuilder worldstring = new StringBuilder ();
 		for(int i = 0; i < worldSize; i++) {
 			StringBuilder sb = new StringBuilder();
 			for(int j = 0; j < worldSize; j++) {
@@ -437,14 +451,14 @@ public class WorldController : MonoBehaviour {
 					sb.Append("O");
 				}
 			}
-			worldString.Append (sb.ToString());
-			worldString.Append ("\n");
+			worldstring.Append (sb.Tostring());
+			worldstring.Append ("\n");
 		}
-		Debug.Log (worldString);
+		Debug.Log (worldstring);
 	}
 	
 	public void printWorld() {
-		StringBuilder worldString = new StringBuilder ();
+		StringBuilder worldstring = new StringBuilder ();
 		for(int i = 0; i < worldSize; i++) {
 			
 			if(emptyRow(i)) {
@@ -482,12 +496,12 @@ public class WorldController : MonoBehaviour {
 			}
 			for(int j = 0; j < chunkSize; j++) {
 				if(sbs[j].Length > 0) {
-					worldString.Append (sbs[j].ToString());
-					worldString.Append ("\n");
+					worldstring.Append (sbs[j].Tostring());
+					worldstring.Append ("\n");
 				}
 			}
 		}
-		Debug.Log (worldString.ToString ());
+		Debug.Log (worldstring.Tostring ());
 	}
 
 	private bool emptyRow(int row) {
