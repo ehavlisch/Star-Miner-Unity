@@ -6,71 +6,69 @@ using System.Text;
 namespace Industry {
 
 	public class Recipe {
-		private List<Resource> input;
-		private List<Resource> output;
+		private List<int?> input;
+		private List<int?> output;
 		
-		private Dictionary<Resource, int> inputRatios;
-		private Dictionary<Resource, int> outputRatios;
-		private Dictionary<Resource, int> outputPercents;
+		private IntegerMap inputRatios;
+		private IntegerMap outputRatios;
+		private IntegerMap outputPercents;
 		private int rate;
 		
 		public Recipe(int inputSize, int outputSize, int rate) {
-			input = new List<Resource>(inputSize);
-			output = new List<Resource>(outputSize);
-			inputRatios = new Dictionary<Resource, int>();
-			outputRatios = new Dictionary<Resource, int>();
-			outputPercents = new Dictionary<Resource, int>();
+			input = new List<int?>(inputSize);
+			output = new List<int?>(outputSize);
+			inputRatios = new IntegerMap();
+			outputRatios = new IntegerMap();
+			outputPercents = new IntegerMap();
 			this.rate = rate;
 		}
 		
-		public void addInputResource(Resource resource, int ratio) {
-			input.Add(resource);
-			inputRatios.Add(resource, ratio);
+		public void addInputResource(int resourceId, int ratio) {
+			input.Add(resourceId);
+			inputRatios.add(resourceId, ratio);
 		}
 		
-		public void addOutputResource(Resource resource, int ratio, int percent) {
-			output.Add(resource);
-			outputRatios.Add(resource, ratio);
-			outputPercents.Add(resource, percent);
+		public void addOutputResource(int resourceId, int ratio, int percent) {
+			output.Add(resourceId);
+			outputRatios.add(resourceId, ratio);
+			outputPercents.add(resourceId, percent);
 		}
 		
 		public string tostring() {
 			StringBuilder sb = new StringBuilder();
 			sb.Append("Input: ");
-			foreach(Resource r in input) {
-				sb.Append(r.getName()).Append(" ");
+			foreach(int? resourceId in input) {
+				sb.Append(resourceId).Append(" ");
 			}
 			sb.Append(" -> ");
-			foreach(Resource r in output) {
-				sb.Append(r.getName()).Append(" ");
+			foreach(int? resourceId in output) {
+				sb.Append(resourceId).Append(" ");
 			}
-			return sb.Tostring();
+			return sb.ToString();
 		}
 		
-		public List<Resource> getInputs() {
+		public List<int?> getInputs() {
 			return input;
 		}
 		
-		public List<Resource> getOutputs() {
+		public List<int?> getOutputs() {
 			return output;
 		}
 		
-		public int getInputRatio(Resource r) {
-			return inputRatios.TryGetValue(r);
+		public int getInputRatio(int resourceId) {
+			return inputRatios.get(resourceId);
 		}
 		
 		public int getRate() {
 			return rate;
 		}
 		
-		public int getOutputRatio(Resource r) {
-			return outputRatios.TryGetValue(r);
+		public int getOutputRatio(int resourceId) {
+			return outputRatios.get (resourceId);
 		}	
 		
-		public int getOutputPercent(Resource r) {
-			int value = null;
-			outputPercents.TryGetValue(r, value);
-			return value;
+		public int getOutputPercent(int resourceId) {
+			return outputPercents.get (resourceId);
 		}
 	}
 

@@ -43,7 +43,7 @@ public class WorldController : MonoBehaviour {
 	}
 
 	private void init () {
-		asteroids = new List ();
+		asteroids = new ArrayList ();
 		asteroids.Add (Resources.Load ("Asteroid01"));
 		asteroids.Add (Resources.Load ("Asteroid02"));
 		asteroids.Add (Resources.Load ("Asteroid03"));
@@ -53,10 +53,10 @@ public class WorldController : MonoBehaviour {
 		asteroids.Add (Resources.Load ("Asteroid07"));
 		//asteroids.Add (Resources.Load ("Asteroid08"));
 		
-		planets = new List ();
+		planets = new ArrayList ();
 		planets.Add (Resources.Load ("Planet01"));
 		
-		stars = new List ();
+		stars = new ArrayList ();
 		stars.Add (Resources.Load ("Star01"));
 
 	}
@@ -451,7 +451,7 @@ public class WorldController : MonoBehaviour {
 					sb.Append("O");
 				}
 			}
-			worldstring.Append (sb.Tostring());
+			worldstring.Append (sb.ToString());
 			worldstring.Append ("\n");
 		}
 		Debug.Log (worldstring);
@@ -496,12 +496,12 @@ public class WorldController : MonoBehaviour {
 			}
 			for(int j = 0; j < chunkSize; j++) {
 				if(sbs[j].Length > 0) {
-					worldstring.Append (sbs[j].Tostring());
+					worldstring.Append (sbs[j].ToString());
 					worldstring.Append ("\n");
 				}
 			}
 		}
-		Debug.Log (worldstring.Tostring ());
+		Debug.Log (worldstring.ToString ());
 	}
 
 	private bool emptyRow(int row) {

@@ -30,7 +30,9 @@ public class MapChunk {
 	private Queue<IntVector2> toDo;
 	private bool[,] mapWritten;
 	private bool[,] mapPending;
-	private UnityEngine.Random random;
+
+	//TODO this should be used for regenerating chunks, but it seems like it can't be instantiated...
+	//Might have to change this to reset the seed before regenerating in the UnityEngine...
 
 	// should default to false
 	private bool filled = false;
@@ -296,41 +298,40 @@ public class MapChunk {
 		
 		float lowerBound = avg - flux;
 		float upperBound = avg + flux;
-		
-		while (map[pos.x, pos.y] <= 0.0f || map[pos.x, pos.y] >= 1.0f 
-		       //Some issues with this right now, we hit loop counts a bunch even with check percentages running only after a certain period of time
-		       || (distributionOk = checkPercentages (map[pos.x, pos.y],buckets,count)) > 0
-		       ) {
-			loopCounts ++;
-			if (loopCounts > size * size) {
-				Debug.Log ("SEVERE: Reached loopCounts! " + distributionOk);
-				return;
-			}
-			if (distributionOk == 1) {
-				// High end - increase negative flux, decrease positive flux
-				lowerBound += flux;
-				upperBound -= flux;
-			} else if (distributionOk == 2) {
-				// Low end - increase positive flux, decrease negative flux
-				lowerBound -= flux;
-				upperBound += flux;
-			}
-			
-			if (lowerBound < 0.0f) {
-				//Debug.Log ("Resetting a lower bound to 0");
-				lowerBound = 0;
-			}
-			if (upperBound > 1.0f) {
-				upperBound = 1;
-				//Debug.Log ("Resetting an upper bound to 1.0f");
-			}
-			
-			if (distributionOk > 0) {
-				//Debug.Log ("Distribution not ok");
-				//return count;
-			}
-			
+
+		if (count < size) {
 			map [pos.x, pos.y] = UnityEngine.Random.Range (lowerBound, upperBound);
+		} else {
+
+			while (map[pos.x, pos.y] <= 0.0f || map[pos.x, pos.y] >= 1.0f 
+			       //Some issues with this right now, we hit loop counts a bunch even with check percentages running only after a certain period of time
+			       || (distributionOk = checkPercentages (map[pos.x, pos.y],buckets,count)) > 0
+			       ) {
+				loopCounts ++;
+				if (loopCounts > size * size) {
+					Debug.Log ("SEVERE: Reached loopCounts! " + distributionOk);
+					Debug.Log (lowerBound + " to " + upperBound);
+					return;
+				}
+				if (distributionOk == 1) {
+					// High end - increase negative flux, decrease positive flux
+					lowerBound += flux;
+					upperBound -= flux;
+				} else if (distributionOk == 2) {
+					// Low end - increase positive flux, decrease negative flux
+					lowerBound -= flux;
+					upperBound += flux;
+				}
+				
+				if (lowerBound < 0.0f) {
+					lowerBound = 0;
+				}
+				if (upperBound > 1.0f) {
+					upperBound = 1;
+				}
+				
+				map [pos.x, pos.y] = UnityEngine.Random.Range (lowerBound, upperBound);
+			}
 		}
 	}
 
@@ -428,7 +429,7 @@ public class MapChunk {
 			b[7]++;
 			return 0;
 		} else if(var >= 0.6) {
-			if((1.0f + b[6])/count * 100 > 80 && count > size) {
+			if((1.0f + b[6])/count * 100 > 90 && count > size) {
 				return 3;
 			}
 			b[6]++;
@@ -440,7 +441,7 @@ public class MapChunk {
 			b[5]++;
 			return 0;
 		} else if(var >= 0.4) {
-			if((1.0f + b[4])/count * 100 > 80 && count > size) {
+			if((1.0f + b[4])/count * 100 > 90 && count > size) {
 				return 3;
 			}
 			b[4]++;
@@ -513,7 +514,6 @@ public class MapChunk {
 		map = null;
 		mapWritten = null;
 		mapPending = null;
-		random = null;
 		filled = false;
 	}
 

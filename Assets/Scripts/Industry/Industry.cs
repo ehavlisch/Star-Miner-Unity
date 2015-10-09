@@ -18,16 +18,19 @@ namespace Industry {
 		private List<IndustryUpgrade> availableIndustryUpgrades;
 		private List<IndustryUpgrade> appliedIndustryUpgrades;
 		private List<Recipe> recipes;
-		private int activeRecipe;
+		private int? activeRecipe;
 		private List<int> forcedActiveRecipes;
 		
 		private int ticks;
 		
-		private Dictionary<string, int> resourcesProduced;
+		private IntegerMap resourcesProduced;
+
+		private EconomyStatics economyStatics;
 		
-		public Industry(int id, string name, Recipe recipe, IndustryGroup group, int tier) {
+		public Industry(EconomyStatics economyStatics, int id, string name, Recipe recipe, IndustryGroup group, int tier) {
 			this.id = id;
 			this.name = name;
+			this.economyStatics = economyStatics;
 			status = IndustryStatus.STARTUP;
 			statusMessage = "Starting up " + name + ".";
 			recipes = new List<Recipe>();
@@ -35,7 +38,7 @@ namespace Industry {
 			activeRecipe = 0;
 			this.group = group;
 			this.tier = tier;
-			resourcesProduced = new Dictionary<string, int>();
+			resourcesProduced = new IntegerMap();
 			approximateCost();
 		}
 		
@@ -45,12 +48,12 @@ namespace Industry {
 			
 			foreach(Recipe recipe in recipes) {
 				float iterationInput = 0;
-				foreach(Resource resource in recipe.getInputs()) {
-					iterationInput += resource.getBaseValue() * recipe.getInputRatio(resource);
+				foreach(int resourceId in recipe.getInputs()) {
+					iterationInput += economyStatics.getResource(resourceId).getBaseValue() * recipe.getInputRatio(resourceId);
 				}
 				float iterationOutput = 0;
-				foreach(Resource resource in recipe.getOutputs()) {
-					iterationOutput += resource.getBaseValue() * recipe.getOutputPercent(resource)/100 * recipe.getOutputRatio(resource);
+				foreach(int resourceId in recipe.getOutputs()) {
+					iterationOutput += economyStatics.getResource(resourceId).getBaseValue() * recipe.getOutputPercent(resourceId)/100 * recipe.getOutputRatio(resourceId);
 				}
 				avg += iterationOutput - iterationInput;
 				if(iterationOutput < iterationInput) {
@@ -74,39 +77,39 @@ namespace Industry {
 			List<IndustryUpgrade> visibleUpgrades = new List<IndustryUpgrade>();
 			
 			if(appliedIndustryUpgrades != null) {
-				Dictionary<int, int> tierMap = new Dictionary<int, int>();
+				IntegerMap tierMap = new IntegerMap();
 				
 				foreach(IndustryUpgrade u in appliedIndustryUpgrades) {
 					if(u.getTierCategory() != null) {
 						int? t = null;
-						t = tierMap.get_Item(u.getTierCategory);
+						t = tierMap.get(u.getTierCategory().Value);
 						if(t != null) {
-							tierMap.Item[u.getTierCategory] =  Mathf.Max(u.getTier(), t);
+							tierMap.put (u.getTierCategory().Value,  Mathf.RoundToInt(Mathf.Max((float) u.getTier(), (float) t)));
 						} else {
-							tierMap.put(u.getTierCategory(), u.getTier());
+							tierMap.put(u.getTierCategory().Value, u.getTier().Value);
 						}
 					}
 				}
 				
 				foreach(IndustryUpgrade u in availableIndustryUpgrades) {
 					if(u.getTierCategory() != null) {
-						if(tierMap.get(u.getTierCategory()) != null) {
-							if(u.getTier() <= tierMap.get(u.getTierCategory()) + 1) {
-								visibleUpgrades.add(u);
+						if(tierMap.get(u.getTierCategory().Value) != 0) {
+							if(u.getTier() <= tierMap.get(u.getTierCategory().Value) + 1) {
+								visibleUpgrades.Add(u);
 							}
 						} else {
 							if(u.getTier() == 0) {
-								visibleUpgrades.add(u);
+								visibleUpgrades.Add(u);
 							}
 						}
 					} else {
-						visibleUpgrades.add(u);
+						visibleUpgrades.Add(u);
 					}
 				}
 			} else {
 				foreach(IndustryUpgrade u in availableIndustryUpgrades) {
 					if((u.getTierCategory() != null && u.getTier() == 0) || u.getTierCategory() == null) {
-						visibleUpgrades.add(u);
+						visibleUpgrades.Add(u);
 					}
 				}
 				
@@ -125,7 +128,7 @@ namespace Industry {
 			if(availableIndustryUpgrades == null) {
 				return;
 			}
-			if(!availableIndustryUpgrades.remove(upgrade)) {
+			if(!availableIndustryUpgrades.Remove(upgrade)) {
 				//System.out.println("Trying to apply an upgrade that doesn't match the available upgrades");
 				return;
 			}
@@ -148,32 +151,33 @@ namespace Industry {
 			status = IndustryStatus.STARTUP;
 			statusMessage = "Industry Restarting.";
 		}
-		
-		public string tostring() {
+
+		public string toString() {
 			StringBuilder sb = new StringBuilder(name);
 			sb.Append(":\n");
-			Iterator<Recipe> it = recipes.iterator();
-			while(it.hasNext()) {
-				Recipe recipe = it.next();
-				sb.Append(recipe);
+			foreach(Recipe recipe in recipes) {
+				sb.Append(recipe.tostring());
 			}
-			return sb.Tostring();
+			return sb.ToString();
+		}
+		public IntegerMap getInputs() {
+			IntegerMap map = new IntegerMap();
+			foreach(Recipe recipe in recipes) {
+				foreach(int resourceId in recipe.getInputs()) {
+					map.add(resourceId, 1);
+				}
+			}
+			return map;
 		}
 		
-		public HashSet<Resource> getInputs() {
-			HashSet<Resource> resources = new HashSet<Resource>();
+		public IntegerMap getOutputs() {
+			IntegerMap map = new IntegerMap();
 			foreach(Recipe recipe in recipes) {
-				resources.addAll(recipe.getInputs());
+				foreach(int resourceId in recipe.getOutputs()) {
+					map.add(resourceId, 1);
+				}
 			}
-			return resources;
-		}
-		
-		public HashSet<Resource> getOutputs() {
-			HashSet<Resource> resources = new HashSet<Resource>();
-			foreach(Recipe recipe in recipes) {
-				resources.addAll(recipe.getOutputs());
-			}
-			return resources;
+			return map;
 		}
 		
 		/**
@@ -184,13 +188,16 @@ namespace Industry {
 		 * 1 if the industry is running
 		 * 2 if the industry has written to the resourceStockMap (retry other halted industries)
 		 */
-		public IndustryRunResult run(Dictionary<string, int> resourceStockMap) {
+		public IndustryRunResult run(IntegerMap resourceStockMap) {
 			switch(status) {
 			case IndustryStatus.DISABLED:
 				return IndustryRunResult.DISABLED;
 			case IndustryStatus.RUNNING:
+				if(activeRecipe == null) {
+					Debug.Log ("Severe: Active recipe is null as the industry is running!");
+				}
 				ticks++;
-				if(ticks == recipes.get(activeRecipe).getRate()) {
+				if(ticks == recipes[activeRecipe.Value].getRate()) {
 					tryStart(resourceStockMap);
 				} else {
 					return IndustryRunResult.RUNNING;
@@ -204,7 +211,7 @@ namespace Industry {
 			}
 		}
 		
-		private IndustryRunResult tryStart(Dictionary<string, int> resourceStockMap) {
+		private IndustryRunResult tryStart(IntegerMap resourceStockMap) {
 			if(canRun(resourceStockMap)) {
 				ticks = 1;
 				status = IndustryStatus.RUNNING;
@@ -216,24 +223,24 @@ namespace Industry {
 			}
 		}
 		
-		private bool canRun(Dictionary<string, int> resourceStockMap) {
+		private bool canRun(IntegerMap resourceStockMap) {
 			foreach(Recipe recipe in recipes) {
 				bool canRun = true;
-				foreach(Resource r in recipe.getInputs()) {
-					int resourceStock = resourceStockMap.get(r.getId());
-					if(resourceStock == null || resourceStock < recipe.getInputRatio(r)) {
-						statusMessage = "Industry Halted. Missing " + r.getName() + ".";
+				foreach(int resourceId in recipe.getInputs()) {
+					int resourceStock = resourceStockMap.get(resourceId);
+					if(resourceStock < recipe.getInputRatio(resourceId)) {
+						statusMessage = "Industry Halted. Missing " + resourceId + ".";
 						canRun = false;
 						break;
 					}
 				}
 				if(canRun) {
-					activeRecipe = recipes.indexOf(recipe);
-					if(forcedActiveRecipes != null && forcedActiveRecipes.size() > 0 && !forcedActiveRecipes.contains(activeRecipe)) {
+					activeRecipe = recipes.IndexOf(recipe);
+					if(forcedActiveRecipes != null && forcedActiveRecipes.Count > 0 && !forcedActiveRecipes.Contains(activeRecipe.Value)) {
 						continue;
 					}
-					foreach(Resource r in recipe.getInputs()) {
-						resourceStockMap.Add(r.getId(), resourceStockMap.get(r.getId()) - recipe.getInputRatio(r));
+					foreach(int resourceId in recipe.getInputs()) {
+						resourceStockMap.add(resourceId, resourceStockMap.get(resourceId) - recipe.getInputRatio(resourceId));
 					}
 					return true;
 				}
@@ -245,25 +252,21 @@ namespace Industry {
 		 * Write the output of the industry into the resourceStockMap
 		 * @param industryResourceStockMap
 		 */
-		private void outputResources(Dictionary<string, int> industryResourceStockMap) {
+		private void outputResources(IntegerMap industryResourceStockMap) {
 			Random random = new Random();
-			foreach(Resource r in recipes.get(activeRecipe).getOutputs()) {
+			foreach(int resourceId in recipes[activeRecipe.Value].getOutputs()) {
 				int resourceCount = 0;
-				for(int i = 0; i < recipes.Find(activeRecipe).getOutputRatio(r); i++) {
-					if(random.nextInt(100) <= recipes.Find(activeRecipe).getOutputPercent(r)) {
+				for(int i = 0; i < recipes[activeRecipe.Value].getOutputRatio(resourceId); i++) {
+					if(Random.Range(0.0f, 100.0f) <= recipes[activeRecipe.Value].getOutputPercent(resourceId)) {
 						resourceCount++;
 					}
 				}
-				addIndustryResource(industryResourceStockMap, r.getId(), resourceCount);
+				addIndustryResource(industryResourceStockMap, resourceId, resourceCount);
 			}
 		}
 		
-		private void addIndustryResource(Dictionary<string, int> industryResourceStockMap, string resourceId, int amount) {
-			if(industryResourceStockMap.TryGetValue(resourceId) == null) {
-				industryResourceStockMap.Add(resourceId, amount);
-			} else {
-				industryResourceStockMap.put(resourceId, industryResourceStockMap.get(resourceId) + amount);
-			}
+		private void addIndustryResource(IntegerMap industryResourceStockMap, int resourceId, int amount) {
+			industryResourceStockMap.add(resourceId, amount);
 		}
 		
 		public void addActiveRecipe(int index) {
@@ -271,7 +274,7 @@ namespace Industry {
 				forcedActiveRecipes = new List<int>();
 			}
 			forcedActiveRecipes.Add(index);
-			if(!forcedActiveRecipes.Contains(activeRecipe)) {
+			if(!forcedActiveRecipes.Contains(activeRecipe.Value)) {
 				ticks = 0;
 				activeRecipe = index;
 				status = IndustryStatus.STARTUP;
@@ -303,7 +306,7 @@ namespace Industry {
 		}
 		
 		public void addRecipe(int index, Recipe recipe) {
-			recipes.Add(index, recipe);
+			recipes.Add(recipe);
 		}
 		
 		public int getId() {

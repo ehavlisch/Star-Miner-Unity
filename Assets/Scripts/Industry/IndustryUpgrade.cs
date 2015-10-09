@@ -10,7 +10,7 @@ namespace Industry {
 		private int? efficiency;
 		private int? rate;
 		private int? other;
-		float price;
+		private int price;
 		
 		private int? tier;
 		private int? tierCategory;
@@ -23,7 +23,7 @@ namespace Industry {
 			int? other = null;
 			for(int i = 0; i < numberUpgrades; i++) {
 				IndustryUpgrade upgrade = new IndustryUpgrade();
-				upgrade.setPrice(Mathf.Floor(price));
+				upgrade.setPrice(Mathf.RoundToInt(Mathf.Floor((float) price)));
 				if(multiplyPrice) {
 					price *= priceStep;
 				} else {
@@ -47,13 +47,14 @@ namespace Industry {
 					efficiency += numberStep;
 					break;
 				}
-				case IndustryUpgradeType.Other: 
+				//case IndustryUpgradeType.Other: 
 				default:
 					if(other == null) {
 						other = baseNumber;
 					}
 					upgrade.setOther(other);
 					other += numberStep;
+					break;
 				}
 				
 				if(i > 0) {
@@ -67,7 +68,7 @@ namespace Industry {
 					upgrade.setTier(i);
 				}
 				
-				upgrades.add(upgrade);
+				upgrades.Add(upgrade);
 			}
 			return upgrades;
 		}
@@ -97,7 +98,7 @@ namespace Industry {
 				s.Append("I");
 				number -= 1;
 			}
-			return s.Tostring();
+			return s.ToString();
 		}
 		
 		public string tostring() {
@@ -136,11 +137,11 @@ namespace Industry {
 			this.other = other;
 		}
 		
-		public double getPrice() {
+		public int getPrice() {
 			return price;
 		}
 		
-		public void setPrice(double price) {
+		public void setPrice(int price) {
 			this.price = price;
 		}
 		
