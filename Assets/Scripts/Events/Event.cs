@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-using DialogueNS;
+using Dialogues;
 using Ai;
 using Triggers;
 
