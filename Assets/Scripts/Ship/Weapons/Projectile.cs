@@ -13,7 +13,6 @@ public class Projectile : MonoBehaviour {
 
 	void Start() {
 		createTime = Time.time;
-		Debug.Log("CreateTime: " + createTime);	
 		lifetime = 5.0f;
 	}
 
