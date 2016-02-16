@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using Events;
 
-namespace DialogueNS {
+namespace Dialogues {
 	public class Dialogue {
 		
 		private string message;

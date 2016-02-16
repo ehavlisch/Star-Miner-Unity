@@ -3,7 +3,7 @@ using System.Collections;
 
 using Events;
 
-namespace DialogueNS {
+namespace Dialogues {
 	public class DialogueTree {
 		
 		private Dialogue currentDialogue;

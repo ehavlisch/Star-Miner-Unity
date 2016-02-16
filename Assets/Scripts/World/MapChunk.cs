@@ -142,7 +142,7 @@ public class MapChunk {
 						//throw new Exception("Invalid location value in locations array");
 					}
 				}
-			}	
+			}
 			generateMap ();
 		}
 	}
@@ -252,7 +252,9 @@ public class MapChunk {
 			Debug.Log ("SEVERE: Trying to generate a map chunk with no neighbors.");
 		}
 
-		Debug.Log ("Filling a mapchunk");
+		//Debug.Log ("Filling a mapchunk");
+		
+		UnityEngine.Random.seed = randomSeed + worldNodeId; 
 
 		while (toDo.Count > 0) {
 
@@ -276,11 +278,11 @@ public class MapChunk {
 		}
 		
 		if (count != size * size) {
-			Debug.Log ("Done Generating map - " + count + " created.");
+			Debug.LogWarning ("Done Generating map - " + count + " created.");
 			for (int i = 0; i < size; i++) {
 				for (int j = 0; j < size; j++) {
 					if (!mapWritten [i, j]) {
-						Debug.Log ("Not written: (" + i + ", " + j + ")");
+						Debug.LogWarning ("Not written: (" + i + ", " + j + ")");
 					}
 				}
 			}
@@ -308,9 +310,9 @@ public class MapChunk {
 			       || (distributionOk = checkPercentages (map[pos.x, pos.y],buckets,count)) > 0
 			       ) {
 				loopCounts ++;
-				if (loopCounts > size * size) {
-					Debug.Log ("SEVERE: Reached loopCounts! " + distributionOk);
-					Debug.Log (lowerBound + " to " + upperBound);
+				if (loopCounts > size) {
+					//Debug.LogWarning ("Reached loopCounts! " + distributionOk + " Failed to generate in range: " + lowerBound + " to " + upperBound);
+					map[pos.x, pos.y] = upperBound - lowerBound / 2.0f;
 					return;
 				}
 				if (distributionOk == 1) {
@@ -328,6 +330,14 @@ public class MapChunk {
 				}
 				if (upperBound > 1.0f) {
 					upperBound = 1;
+				}
+				if(upperBound < lowerBound || lowerBound > upperBound) {
+					float temp = upperBound;
+					upperBound = lowerBound;
+					lowerBound = temp;
+				} else if(upperBound == lowerBound) {
+					map[pos.x, pos.y] = upperBound;
+					return;
 				}
 				
 				map [pos.x, pos.y] = UnityEngine.Random.Range (lowerBound, upperBound);

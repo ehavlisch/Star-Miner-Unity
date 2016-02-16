@@ -26,12 +26,15 @@ public class PlayerController : MonoBehaviour {
 		float mainThruster = Input.GetAxis ("MainThruster");
 		float rotate = Input.GetAxis ("Rotate");
 		float dampening = Input.GetAxis ("Dampening");
+		float engineVolume = 0.1f;
 
 		bool precise = false;
 		if(Input.GetAxis ("Precise") != 0) {
 			precise = true;
 		}
 		Rigidbody rigidBody = ship.GetComponent<Rigidbody> ();
+		//TODO the only constant change here is the fuel weight. 
+		// Need to change this to keep most of the ship mass constant
 		rigidBody.mass = ship.calculateMass ();
 
 		float angle = rigidBody.rotation.eulerAngles.y;
@@ -43,12 +46,21 @@ public class PlayerController : MonoBehaviour {
 		float mainThrusterX = Mathf.Sin (Mathf.Deg2Rad * angle) * mainThruster * ship.calculateEngineForce();
 		float mainThrusterZ = Mathf.Cos (Mathf.Deg2Rad * angle) * mainThruster * ship.calculateEngineForce();
 
+		if (Mathf.Abs(latThruster) > 0) {
+			engineVolume = 0.9f;
+		}
+
+		if (Mathf.Abs(mainThruster) > 0) {
+			engineVolume = 1.0f;
+		}
+
 		mainThrusterX += latThrusterX;
 		mainThrusterZ += latThrusterZ;
 
 		Vector3 dampenAngularVector = new Vector3(0,0,0);
 		Vector3 dampenVector = new Vector3 (0, 0, 0);
 		if (dampening > 0) {
+			engineVolume = 0.7f;
 			float aVY = rigidBody.angularVelocity.y;
 			if(aVY > 0.0) {
 				dampenAngularVector = new Vector3(0, - ship.calculateEngineRotate(),0);
@@ -69,6 +81,7 @@ public class PlayerController : MonoBehaviour {
 		bool dampen = (dampenVector.magnitude > 0.0f ? true : false);
 		
 		if(precise) {
+			engineVolume = engineVolume * 0.5f;
 			movement *= 0.5f;
 		}
 	
@@ -107,11 +120,13 @@ public class PlayerController : MonoBehaviour {
 				float fuelScalar = ((fuelCost - fuelShortage) / fuelCost);
 				movement *= fuelScalar;
 				angularVector *= fuelScalar;
+				engineVolume *= fuelScalar;
 			}
 		} else {
 			//Debug.Log("Low Velocity (" + rigidBody.velocity.magnitude + ") - free fuel");
 		}
 
+		ship.setEngineVolume (engineVolume);
 		rigidBody.AddForce (movement);
 		rigidBody.AddTorque (angularVector);
 

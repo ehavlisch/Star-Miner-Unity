@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 
+using Ship;
+
 public class ShipController : MonoBehaviour {
 
 	public float mass;
@@ -18,7 +20,7 @@ public class ShipController : MonoBehaviour {
 	private List<Generator> generators;
 
 	public int maxWeapons;
-	private WeaponController[] weapons;
+	private Weapon[] weapons;
 	private Transform[] shotSpawns;
 
 	private int maxCargoBays;
@@ -30,6 +32,8 @@ public class ShipController : MonoBehaviour {
 
 	public float maxHull;
 	private float hull;
+
+	private List<AudioSource> engineAudioSources;
 
 	void Start() {
 		maxFuelTanks = 4;
@@ -45,7 +49,12 @@ public class ShipController : MonoBehaviour {
 		fuelTanks.Add (new FuelTank (new FuelType (1, 100), 100, 100, 5, 100));	
 		maxFuel = calculateMaxFuelVolume ();
 
-		engines.Add (new Engine (100, 1600, 80, 800, 60, 100, 1000, "Basic Engine"));
+		engines.Add (new GenericEngine());
+
+		engineAudioSources = new List<AudioSource> (maxEngines);
+		foreach(Engine engine in engines) {
+			engineAudioSources.Add(engine.getMainSound(gameObject));
+		}
 
 		generators.Add (new Generator (20, 30, 1f, 100, 1000, "Basic Generator"));
 		maxEnergy = calculateTotalMaxEnergy ();
@@ -55,25 +64,19 @@ public class ShipController : MonoBehaviour {
 		cargoBays.Add (new CargoBay (2000, 100, 100, "Basic Cargo Bay"));
 
 		hull = maxHull;
-		weapons = new WeaponController[maxWeapons];
+		weapons = new Weapon[maxWeapons];
 		shotSpawns = new Transform[maxWeapons];
 
 		for (int i = 0; i < maxWeapons; i++) {
 			shotSpawns[i] = (transform.FindChild("ShotSpawn" + (i+1)));
 		}
-		GameObject gameObject = (GameObject)Instantiate (Resources.Load ("SimpleLaser"));
-		SimpleLaser laser = gameObject.GetComponent<SimpleLaser> ();
-		laser.transform.parent = this.transform;
 
-		weapons[0] = laser;
+		weapons[0] = new SimpleLaser ();
 
-		gameObject = (GameObject)Instantiate (Resources.Load ("SimpleLaser"));
-		laser = gameObject.GetComponent("SimpleLaser") as SimpleLaser;
-		laser.transform.parent = this.transform;
-
-		weapons[1] = laser;
+		weapons[1] = new SimpleLaser ();
 
 		GetComponent<Rigidbody>().mass = calculateMass();
+
 	}
 
 	void OnCollisionEnter(Collision col) {
@@ -108,33 +111,45 @@ public class ShipController : MonoBehaviour {
 	public void fire() {
 		float angle = GetComponent<Rigidbody> ().rotation.eulerAngles.y * Mathf.Deg2Rad;
 		for (int i = 0; i < maxWeapons; i++) {
-			WeaponController weapon = weapons[i];
+			Weapon weapon = weapons[i];
 			if(weapon != null) {
 				if(Time.time > weapon.getNextFire()) {
-					if(energy > weapon.getEnergyCost()) {
-						GameObject gameObject = (GameObject)Instantiate (weapon.getProjectile(), shotSpawns[i].position , shotSpawns[i].rotation);
-						Projectile projectile = gameObject.GetComponent <Projectile>();
+					if(energy > weapon.energyCost) {
+						GameObject projectileObject = (GameObject)Instantiate (Resources.Load(weapon.projectileName), shotSpawns[i].position , shotSpawns[i].rotation);
+						Projectile projectile = projectileObject.GetComponent <Projectile>();
 
-						Physics.IgnoreCollision(gameObject.GetComponent<Collider>(), GetComponent<Collider>());
+						Physics.IgnoreCollision(projectileObject.GetComponent<Collider>(), GetComponent<Collider>());
 
-						float projectileVelocityX = Mathf.Sin (angle) * weapon.getProjectileSpeed();
-						float projectileVelocityZ = Mathf.Cos (angle) * weapon.getProjectileSpeed();
+						float projectileVelocityX = Mathf.Sin (angle) * weapon.projectileSpeed;
+						float projectileVelocityZ = Mathf.Cos (angle) * weapon.projectileSpeed;
+						projectile.damage = weapon.damage;
+						projectile.force = weapon.force;
+
+						if(weapon.recoil) {
+							float recoilX = - Mathf.Sin (angle) * weapon.recoilForce;
+							float recoilZ = - Mathf.Cos (angle) * weapon.recoilForce;
+
+							GetComponent<Rigidbody>().AddForce(new Vector3(recoilX, 0.0f, recoilZ));
+						}
+
 						Vector3 projectileVelocity = new Vector3(projectileVelocityX, 0, projectileVelocityZ);
-						projectile.setDamage(weapon.getDamage());
-						projectile.setForce(weapon.getForce());
-
-						float recoilX = - Mathf.Sin (angle) * weapon.getRecoilForce();
-						float recoilZ = - Mathf.Cos (angle) * weapon.getRecoilForce();
-
-						GetComponent<Rigidbody> ().AddForce(new Vector3(recoilX, 0.0f, recoilZ));
-
-						projectile.setVelocity(projectileVelocity + GetComponent<Rigidbody>().velocity);
+						projectile.GetComponent<Rigidbody>().velocity = (projectileVelocity + GetComponent<Rigidbody>().velocity);
 						weapon.setNextFire(Time.time);
-						energy -= weapon.getEnergyCost();
+						energy -= weapon.energyCost;
 					}
 				}
 			}
 
+		}
+	}
+
+	public void setEngineVolume(float volume) {
+		foreach (AudioSource audioSource in engineAudioSources) {
+			if(audioSource.volume > volume) {
+				audioSource.volume = audioSource.volume - 0.05f;
+			} else {
+				audioSource.volume = volume;
+			}
 		}
 	}
 
@@ -257,26 +272,6 @@ public class ShipController : MonoBehaviour {
 
 	public float getMaxFuel() {
 		return maxFuel;
-	}
-}
-
-public class Engine : Cargo {
-	public float efficiency;
-	public float force;
-
-	public float forceLat;
-	public float forceRotate;
-
-	public Engine(float efficiency, float force, float mass, float forceLat, float forceRotate, float volume, float value, string name) {
-		this.efficiency = efficiency;
-		this.force = force;
-		this.mass = mass;
-		this.forceLat = forceLat;
-		this.forceRotate = forceRotate;
-
-		this.volume = volume;
-		this.value = value;
-		this.name = name;
 	}
 }
 

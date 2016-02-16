@@ -2,6 +2,8 @@
 using System.Collections;
 using UnityEngine.UI;
 
+using Events;
+
 public class GameController : MonoBehaviour {
 
 	public Camera mainCamera;
@@ -12,13 +14,23 @@ public class GameController : MonoBehaviour {
 
 	bool showMenu = false;
 
+	// Debugging tools
+	private bool testMode = true;
+	private bool staticRandomSeed = false;
+
 	void Start() {
+		Debug.Log ("Starting");
+		if (staticRandomSeed) {
+			UnityEngine.Random.seed = 150;
+		}
+		if (testMode) {
+			testEvents();
+			//sortEventNames();
+		}
 		//TODO this should be a landing menu for the game, then put into debug which will automatically start a new game
 
 		//TODO programatically create player, starting ship, and attach main camera;
 		//player = new PlayerController ();
-
-		UnityEngine.Random.seed = 150;
 
 		worldController.generateWorld ();
 
@@ -53,5 +65,24 @@ public class GameController : MonoBehaviour {
 			uiController.disable();
 			return true;  
 		}
+	}
+
+	void testEvents() {
+		Debug.Log ("Starting testEvents");
+		RandomEvent anEvent = EventFactory.generateEvent ();
+		anEvent.runEvent ();
+
+		for(int i = 0; i < 10; i ++) {
+			if(anEvent.isClosed()) {
+				break;
+			}
+			anEvent.selectAction (0);
+
+		}
+		Debug.Log ("Finished testEvents");
+	}
+
+	void sortEventNames() {
+		EventFactory.sortIds ();
 	}
 }

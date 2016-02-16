@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-using DialogueNS;
+using Dialogues;
 using Ai;
 using Util;
 using Triggers;
@@ -14,10 +14,7 @@ namespace Events {
 
 	public class EventFactory {
 		
-		public static Event generateEvent() {
-			//		int eventsSize = 1;
-			
-			//		new Random().nextInt(eventsSize))
+		public static RandomEvent generateEvent() {
 			switch(UnityEngine.Mathf.FloorToInt(UnityEngine.Random.Range(0, 2))) {
 			case 2: {
 				return strandedShipEvent();
@@ -35,7 +32,7 @@ namespace Events {
 			}
 		}
 		
-		private static Event strandedShipEvent() {
+		private static RandomEvent strandedShipEvent() {
 			
 			string id = generateId();
 			
@@ -115,10 +112,10 @@ namespace Events {
 			
 			DialogueTree dialogueTree = new DialogueTree(dialogue);
 			
-			return new Event("strandedShip", dialogueTree, id);	
+			return new RandomEvent("strandedShip", dialogueTree, id);	
 		}
 		
-		private static Event abandonedShipEvent() {
+		private static RandomEvent abandonedShipEvent() {
 			string id = generateId();
 			
 			string unsureHelloOptionLabel = "Hello?";
@@ -174,10 +171,10 @@ namespace Events {
 			
 			DialogueTree dialogueTree = new DialogueTree(lureDialogue);
 			
-			return new Event("ambush", dialogueTree, id);
+			return new RandomEvent("ambush", dialogueTree, id);
 		}
 		
-		private static Event anomalyEvent() {
+		private static RandomEvent anomalyEvent() {
 			
 			string scanAnomalyOptionLabel = "Scan";
 			
@@ -193,7 +190,7 @@ namespace Events {
 			
 			DialogueTree dialogueTree = new DialogueTree(anomalyDialogue);
 			
-			Event evt = new Event("Anomaly", dialogueTree,"???");
+			RandomEvent evt = new RandomEvent("Anomaly", dialogueTree,"???");
 			evt.setComs(false);
 			return evt;
 		}
@@ -246,7 +243,8 @@ namespace Events {
 		}
 		
 		public static string generateRandomIdentifier(bool removeSpace) {
-			string id = identifiers[Utils.randomInt(identifiers.Length)];
+			int index = Utils.randomInt (identifiers.Length);
+			string id = identifiers[index];
 			
 			if(removeSpace) {
 				id = id.Substring(1, id.Length);
@@ -287,21 +285,25 @@ namespace Events {
 		private static string[] fusionWords = {
 			"Fusion", "Hybrid", "Morph", "Combo", "Combination", "Mesh", "Fused", "Merged"
 		};
+
+		private static string[] identifiers = {
+			"Identifier"
+		};
 		
 		private static string[] ids = {
-			"A-Wing", "Achilles", "Acidalia", "Adrastea", "Aegaeon", "Aegir", "Aitheria", "Aiti", "Aitimaa", "Aitne", "Aizea", "Ajax", "Akmar", "Alawi", "Albiorix", "Alhena", "Allita", "Almika", "Alzubra", "Amalthea", "Amalur", "Amalurra", "Ananke", "Andromeda", "Angel", "Ant", "Anthe", "Anubis", "Anubite", "Aoede", "Apache", "Aphrodite", "Apolline", "Apollo", "Apollonia", "Apostate", "Aqmar", "Arche", "Arcus", "Argon", "Argus", "Ariel", "Ars", "Artemis", "Arwing", "Asianne", "Asta", "Asteria", "Astra", "Astrea", "Astrolab", "Astrolux", "Atalanta", "Athena", "Atlas", "Auriok", "Aurum", "Automaton", "Autonoe", "Avenger", "Azban", "Azeroth", "Azure", 
+			"Achilles", "Acidalia", "Adrastea", "Aegaeon", "Aegir", "Aitheria", "Aiti", "Aitimaa", "Aitne", "Aizea", "Ajax", "Akmar", "Alawi", "Albiorix", "Alhena", "Allita", "Almika", "Alzubra", "Amalthea", "Amalur", "Amalurra", "Ananke", "Andromeda", "Angel", "Ant", "Anthe", "Anubis", "Anubite", "Aoede", "Apache", "Aphrodite", "Apolline", "Apollo", "Apollonia", "Apostate", "Aqmar", "Arche", "Arcus", "Argon", "Argus", "Ariel", "Ars", "Artemis", "Arwing", "Asianne", "Asta", "Asteria", "Astra", "Astrea", "Astrolab", "Astrolux", "Atalanta", "Athena", "Atlas", "Auriok", "Aurum", "Automaton", "Autonoe", "Avenger", "A-Wing", "Azban", "Azeroth", "Azure", 
 			"Baast", "Bab-El-Sama", "Badra", "Badriyyah", "Baldr", "Baldur", "Ballista", "Banshee", "Bast", "Bear", "Beaver", "Bebhionn", "Behemoth", "Belinda", "Bellerphon", "Bergelmir", "Bestla", "Bianca", "Bireme", "Bishop", "Blackhand", "Blackwatch", "Bladeburn", "Blood Hunter", "Boar", "Boeing", "Bolas", "Boris", "Burnside", 
 			"Caelestra", "Caeli", "Caelia", "Caesar", "Caladria", "Caliban", "Callirrhoe", "Callisto", "Calva", "Calypso", "Camel", "Cancer", "Capricorn", "Carbon", "Carcinos", "Carme", "Carnivora", "Carpo", "Carrier", "Celaeno", "Celesse", "Celesta", "Celestia", "Celestiel", "Celestina", "Celia", "Celine", "Centaur", "Century", "Ceunturion", "Chaldene", "Chamanja", "Chandra", "Chandrani", "Chandrika", "Chaplain", "Charon", "Chaska", "Chava", "Cheiroballista", "Cherika", "Chimera", "Chipara", "Cira", "Claimh Solas", "Cobalt", "Cochava", "Colossus", "Contarius", "Controller", "Copper", "Cordelia", "Cow", "Cressida", "Cruiser", "Crystal", "Cupid", "Cyclops", "Cyllene", 
 			"Daichi", "Damia", "Dangeresque", "Daphnis", "Deimos", "Dellingr", "Desdemona", "Despina", "Destiny", "Developer", "Dia", "Diamond", "Dinger", "Dingo", "Dione", "Dionysus", "Donoma", "Doombringer", "Drakkar", "Dremora", "Dunia", "Duniya", "Dunya", "Dysnomia", 
 			"Eagle", "Echo", "Einherjar", "Elara", "Eleana", "Elektra", "Eliana", "Elianna", "Elianne", "Elver", "Emperor", "Empire", "Enceladus", "Epimetheus", "Erinome", "Erriapus", "Essie", "Estee", "Estella", "Estelle", "Ester", "Esther", "Estrela", "Eszter", "Eszti", "Euanthe", "Eukelade", "Euporie", "Europa", "Eurydome", "Eustella", "Exodus", 
 			"Facade", "Falak", "Falcon", "Falkreath", "Farbauti", "Fenrir", "Ferdinand", "Fimbulwinter", "Firdaus", "Firdaws", "Firdous", "Fochik", "Fornjot", "Forseti", "Francisco", "Freya", "Freyja", "Freyr", "Frost", 
-			"Galatea", "Ganymede", "Gastraphetes", "Gemini", "Giant", "Gimle", "Goblin", "Goldenrod", "Goliath", "Gomorrah", "Gravekeeper", "Greip", "Gunner", 
-			"Hades", "Hakidonmuya", "Hala", "Halimede", "Harpalyke", "Hathor", "Hati", "Hawk", "Hawkeye", "Hegemone", "Heimdall", "Heimdallr", "Heka Gigantes", "Hekate", "Hel", "Helene", "Helepolis", "Helia", "Helike", "Helios", "Hellbringer", "Hephaestus", "Hera", "Heracles", "Hercules", "Hermes", "Hermippe", "Herse", "Hersir", "Hester", "Hetairoi", "Hi'laka", "Hilal", "Himalia", "Hina", "Hippikon", "Hippocampus", "Hippolyta", "Honua", "Hoor", "Hoplite", "Hoshi", "Hoshiko", "Hoshiyo", "Hrunting", "Hullanta", "Huskarl", "Hydra", "Hypaspist", "Hyperion", "Hyrrokkin", "Höðr", "Hœnir", 
+			"Galatea", "Gangrene", "Ganymede", "Gastraphetes", "Gemini", "Gengar", "Gentile", "Geodude", "German", "Giant", "Gimle", "Ginger", "Giovani", "Goblin", "Golbat", "Goldan", "Golden", "Goldenrod", "Goliath", "Gomorrah", "Gorgeous", "Gravekeeper", "Greip", "Gremlin", "Griff", "Griffin", "Grinder", "Gungan", "Gungnir", "Gunner", "Gyro", 
+			"Hades", "Hakidonmuya", "Hala", "Halimede", "Harpalyke", "Hathor", "Hati", "Hawk", "Hawkeye", "Hegemone", "Heimdall", "Heimdallr", "Heka Gigantes", "Hekate", "Hel", "Helene", "Helepolis", "Helia", "Helike", "Helios", "Hellbringer", "Hephaestus", "Hera", "Heracles", "Hercules", "Hermes", "Hermippe", "Herse", "Hersir", "Hester", "Hetairoi", "Hi'laka", "Hilal", "Himalia", "Hina", "Hippikon", "Hippocampus", "Hippolyta", "Höðr", "Hœnir", "Honua", "Hoor", "Hoplite", "Hoshi", "Hoshiko", "Hoshiyo", "Hrunting", "Hullanta", "Huskarl", "Hydra", "Hypaspist", "Hyperion", "Hyrrokkin", 
 			"Iamar", "Ijiraq", "Indigo", "Indu", "Indukala", "Indulala", "Induma", "Industrial Freighter", "Infantry", "Intina", "Io", "Ion", "Iris", "Iron", "Isonoe", "Ixkin", "Izar", "Izarra", 
 			"Jaguar", "Jango", "Janissary", "Janna", "Janus", "Jarl", "Jarnsaxa", "Jason", "Jata", "Jay", "Jellyfish", "Jelonik", "Jericho", "Jinan", "Jormund", "Juggernaut", "Juliet", "Jupiter", "Jyotsna", 
 			"Kalani", "Kale", "Kallichore", "Kalyke", "Kamar", "Kamra", "Kane", "Kari", "Katapeltes", "Kawkab", "Kawthar", "Kealani", "Keeper", "Kerberos", "Khepri", "Kiania", "Kianira", "Kiche", "King", "Kingfisher", "Kingpin", "Kirov", "Kitten", "Kiviuq", "Knight", "Kong", "Kore", "Kraken", 
 			"Lamb", "Lampades", "Lani", "Lanika", "Laomedeia", "Lapetus", "Larissa", "Lazarus", "Leda", "Legate", "Legion", "Legionaire", "Leilani", "Leolani", "Leto", "Levana", "Leviathan", "Lian", "Liane", "Lianna", "Liger Zero", "Lion", "Locaste", "Loge", "Loki", "Longboat", "Loni", "Lordchefmage", "Luan", "Luna", "Lunasa", "Lunetta", "Lurra", "Lysithea", 
-			"Mab", "Magena", "Magmus", "Magnus", "Maia", "Maiden of the Mist", "Maleda", "Mammoth", "Man O' War", "Man of War", "Manticore", "Mapiya", "Marauder", "Maret", "Margaret", "Marinda", "Mars", "MedVac", "Medini", "Medusa", "Megaclite", "Meili", "Mercury", "Methone", "Metis", "Miakoda", "Migina", "Mikazuki", "Millenium", "Mimas", "Mimiteh", "Minion", "Minotaur", "Miranda", "Misae", "Mneme", "Mobius", "Mona", "Moon", "Moose", "Morndas", "Mountain", "Mourne", "Mummy", "Mundilfari", "Murmillo", "Myrmidon", "Mythril", 
+			"Mab", "Magena", "Magmus", "Magnus", "Maia", "Maiden of the Mist", "Maleda", "Mammoth", "Man O' War", "Man of War", "Manticore", "Mapiya", "Marauder", "Maret", "Margaret", "Marinda", "Mars", "Medini", "Medusa", "MedVac", "Megaclite", "Meili", "Mercury", "Methone", "Metis", "Miakoda", "Migina", "Mikazuki", "Millenium", "Mimas", "Mimiteh", "Minion", "Minotaur", "Miranda", "Misae", "Mneme", "Mobius", "Mona", "Moon", "Moose", "Morndas", "Mountain", "Mourne", "Mummy", "Mundilfari", "Murmillo", "Myrmidon", "Mythril", 
 			"Naiad", "Najm", "Najma", "Namaka", "Namid", "Narvi", "Nautilus", "Nemean", "Nephthys", "Neptune", "Nereid", "Neso", "Nidhogg", "Niji", "Nijina", "Nix", "Njord", "Njörðr", "Nyika", "Nymaane", "Nyota", 
 			"Oberon", "Oceanus", "Ocelot", "Odin", "Odysseus", "Onile", "Ooljee", "Oota Dabun", "Ophelia", "Oracle", "Oriana", "Oriole", "Oro", "Orthosie", "Osiris", "Osprey", "Osumare", "Overlord", "Ox", 
 			"Paaliaq", "Pachama", "Pachamama", "Paiva", "Paivatar", "Paladin", "Pallene", "Pamuya", "Pan", "Pandora", "Panther", "Pasiphae", "Pasture", "Pawn", "Peace", "Pegasus", "Peltast", "Perdita", "Perseus", "Petrobolos", "Petsuchos", "Phobos", "Phoebe", "Phoenix", "Pig", "Pleione", "Pluto", "Polani", "Polydeuces", "Polyphemus", "Portia", "Poseidon", "Prasithee", "Praxidike", "Priest", "Prodromos", "Promethean", "Prometheus", "Prospero", "Proteus", "Psamathe", "Ptah", "Puck", "Puma", "Purnima", 
@@ -312,78 +314,43 @@ namespace Events {
 			"Ulfsark", "Ullr", "Umbriel", "Undead", "Urania", "Uruk-hai", 
 			"Vader", "Vali", "Valkyrie", "Vanessa", "Var", "Vega", "Vengeance", "Venus", "Vermouth", "Vespera", "Vesperia", "Vespira", "Vili", "Villager", "Vindicator", "Vioarr", "Virulent", "Virus", "Vor", 
 			"Wadjet", "Wallaby", "Walrus", "War Turtle", "Warbringer", "Warface", "Warlike", "Warner", "Warren", "Warrior", "Water", "Weilani", "Wendel", "Wendigo", "Wicapiwakan", "Wilhelm", "Woodchuck", "Wraith", "Wrath", "Wumbo", 
-			"X-Wing", "Xavier", "Xylo", 
-			"Y-Wing", "Yager", "Yaxeka", "Yaxkin", "Ymir", "Yuri", 
+			"Xavier", "X-Wing", "Xylo", 
+			"Yager", "Yaxeka", "Yaxkin", "Ymir", "Yuri", "Y-Wing", 
 			"Zero", "Zeus", "Ziazan", "Zisa", "Zonje", "Zonnetje", "Zuvan"
 		};
-		
-		private static string[] identifiers = {
-			" 0", " 00", " 000", 
-			" 1", " 10", " 111", 
-			" 2", " 222", 
-			" 3", " 333", " 343", 
-			" 4", " 404", " 444", 
-			" 5", " 555", 
-			" 66", " 666", " 69", 
-			" 7", " 77", " 777", 
-			" 888", 
-			" 999", 
-			" A", " AB", " AC", " AD", " AE", " AG", " Alfa", " Alpha", " Archer", " Army", " Atlas", " Azul", 
-			" B", " BA", " BAMF", " BE", " BI", " BM", " BMF", " BMW", " BP", " BW", " BX", " BYE", " Badass", " Black", " Blue", " Boosted", " Bowman", " Bravo", " Bronze", " Brvo", 
-			" C", " CD", " CM", " CP", " CR", " CV", " CX", " CZ", " CZ17", " Calliente", " Caravan", " Cavalry", " Champion", " Char", " Chariot", " Charles", " Charlie", " Checkered", " Class", " Classic", " Courier", " Custom", 
-			" D", " DEEZ", " DG", " DP", " DT", " DV", " DZ", " Del", " Delta", " Delux", " Deluxe", " Destroyer", " Dlta", " Drifter", 
-			" E", " E Class", " E-V", " EM", " EN", " EP", " ES", " ESP", " ET", " EV", " EX", " EXP", " Echo", " Ecko", " Eco", " Eko", " Elite", " Experimental", " Explorer", 
-			" F", " FG", " FN", " FNG", " FRAG", " FRG", " FX", " Facade", " Fake", " Fanatic", " Featherlight", " Ferry", " Flashy", " Floater", " For Sale", " Foxtrot", " Ftl", " Fxtr", " Fxtrt", 
-			" G", " GO", " GOVT", " GT", " GTX", " GX", " Galley", " Gamma", " Gma", " Gold", " Gov", " Government", " Green", 
-			" H", " HA", " HI", " HV", " HVY", " HWY", " Heavy", " Hero", " Hotel", " Htl", 
-			" I", " IG", " II", " III", " IK", " IKR", " IR", " IR8M8", " IT", " ITME", " IV", " IX", " IY", " Idg", " Impulse", " Indigo", 
-			" J", " JATO", " JB", " JBLK", " JET", " JK", " JKJK", " JP", " JPOP", " JR", " JROC", " JTO", " JV", " Jr", 
-			" K", " KK", " KLM", " KO", " KP", " KPN", " KPOP", " KPS", " KQ", " KQED", " KV", " KX", " Knockoff", 
-			" L", " L8RG8R", " LGT", " LP", " LPN", " LRP", " LVL", " LVN", " LVS", " LX", " Legendary", " Light", " Lightweight", " Lux", " Luxury", 
-			" M", " M Class", " MAN", " MB", " MED", " MEN", " MG", " MI", " MIL", " MN", " MO", " MON", " MR", " MS", " MSFT", " MU", " MX", " MY", " MZ", " Mapping", " Master Class", " Mb", " Med", " Medium", " Merch", " Merchant", " Merry", " Mk.I", " Mk.II", " Mk.III", " Model 1", " Model 2", " Model 3", " Model 4", " Model A", " Model B", " Model C", " Modern", " Mr", 
-			" N", " NO", " NOB", " NOOB", " NOX", " NS", " NUB", " Negro", " Night", " Nix", " No", " Nox", " Nuclear", 
-			" O", " OBO", " OD", " ODO", " OE", " OO", " OP", " OV", " Official", " Orbiter", 
-			" P", " PDP", " PDW", " PX", " Plat", " Platinum", " Premium", " Pristine", " Purple", 
-			" Q", 
-			" R", " RFD", " Radeon", " Red", " Reinforced", " Revamped", " Revived", " Rojo", " Royal", " Royalty", 
-			" S", " S Class", " SCO", " Salvaged", " Scavenger", " Scout", " Shielded", " Silver", " Sketchy", " Skirmisher", " Slinger", " Solar", " Spinoff", " Superlight", 
-			" T", " TI", " Tanking", " Taxi", " Trans", " Transport Class", " Turbocharged", 
-			" U", " Unregistered", 
-			" V", " V1", " V2", " V3", " V4", " V5", " VII", " Vetted", " Vintage", 
-			" W", " Wanderer", 
-			" X", " Xplor", 
-			" Y", " Yellow", 
-			" Z", 
-			" v2", " v3", " v4", " v5", " v6"
-		};
 
-		/*
+
 		public static void sortIds() {
-			TreeSet<string> sorted = new TreeSet<string>();
+			SortedList<string, string> sorted = new SortedList<string, string>();
 			for(int i = 0; i < ids.Length; i++) {
-				sorted.Add(ids[i]);
+				try {
+					sorted.Add(ids[i], ids[i]);
+				} catch(Exception e) {
+					Debug.Log ("Duplicate: " + ids[i]);
+					Debug.Log (e.Message);
+				}
 			}
 			
 			StringBuilder sb = new StringBuilder();
 			sb.Append("{\n");
 			
-			char c = sorted.first().charAt(0);
-			foreach(string id in sorted) {
-				if(c == id.charAt(0)) {
+			char c = sorted.Values[0].ToCharArray()[0];
+			ICollection<string> keys = sorted.Keys;
+			foreach(string id in keys) {
+				if(c == id.ToCharArray()[0]) {
 					sb.Append("\"").Append(id).Append("\", ");
 				} else {
-					c = id.charAt(0);
+					c = id.ToCharArray()[0];
 					sb.Append("\n\"").Append(id).Append("\", ");
 				}
 			}
-			sb.deleteCharAt(sb.Length - 1);
-			sb.deleteCharAt(sb.length() - 1);
+			sb.Remove (sb.Length - 2, 2);
 			
 			sb.Append("\n};");
 
 			Debug.Log (sb.ToString());
 		}
-		*/
+
 		/*
 		public static void sortIdentifiers() {
 			TreeSet<string> sorted = new TreeSet<string>();

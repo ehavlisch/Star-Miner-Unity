@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+using Ship;
+
 public class AsteroidController : MonoBehaviour {
 
 	public float health;
@@ -101,7 +103,7 @@ public class AsteroidController : MonoBehaviour {
 	void OnCollisionEnter(Collision col) {
 		Projectile projectile = col.transform.GetComponent<Projectile> ();
 		if (projectile != null) {
-			health -= projectile.getDamage();
+			health -= projectile.damage;
 			//GetComponent<Rigidbody>().AddForce
 			Destroy(col.gameObject);
 		} else {

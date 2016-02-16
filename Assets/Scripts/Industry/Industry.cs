@@ -253,7 +253,7 @@ namespace Industry {
 		 * @param industryResourceStockMap
 		 */
 		private void outputResources(IntegerMap industryResourceStockMap) {
-			Random random = new Random();
+			//Random random = new Random();
 			foreach(int resourceId in recipes[activeRecipe.Value].getOutputs()) {
 				int resourceCount = 0;
 				for(int i = 0; i < recipes[activeRecipe.Value].getOutputRatio(resourceId); i++) {
