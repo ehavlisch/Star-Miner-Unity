@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 public class IntVector2 {
 	public int x;
@@ -12,6 +13,11 @@ public class IntVector2 {
 	public string Tostring () {
 		return "(" + x + ", " + y + ")";
 	}
+
+    public IntVector2(Vector3 vector3)  {
+        x = Mathf.FloorToInt(vector3.x);
+        y = Mathf.FloorToInt(vector3.z);
+    }
 }
 
 

@@ -1,8 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
-using UnityEngine.UI;
-
-using Events;
+using Tests;
 
 public class GameController : MonoBehaviour {
 
@@ -18,14 +15,18 @@ public class GameController : MonoBehaviour {
 	private bool testMode = true;
 	private bool staticRandomSeed = false;
 
-	void Start() {
+    // For generating map chunks the player moves towards
+    private Vector3 lastCheckedPosition;
+    private float travelThreshold = 10;
+
+
+    void Start() {
 		Debug.Log ("Starting");
 		if (staticRandomSeed) {
-			UnityEngine.Random.seed = 150;
+			Random.seed = 151;
 		}
 		if (testMode) {
-			testEvents();
-			//sortEventNames();
+            Test.runTests();
 		}
 		//TODO this should be a landing menu for the game, then put into debug which will automatically start a new game
 
@@ -36,10 +37,21 @@ public class GameController : MonoBehaviour {
 
 		worldController.printWorld ();
 		worldController.printWorldNodes ();
+
+        lastCheckedPosition = player.GetComponent<Transform>().position;
+        Debug.Log(lastCheckedPosition);
 	}
 
 	void FixedUpdate() {
 		uiController.update (player);
+        Vector3 currentPosition = player.GetComponent<Transform>().position;
+        if(Vector3.Distance(currentPosition, lastCheckedPosition) >= travelThreshold) {
+            Debug.Log(Vector3.Distance(currentPosition, lastCheckedPosition));
+            Debug.Log(currentPosition);
+            Debug.Log(lastCheckedPosition);
+            lastCheckedPosition = currentPosition;
+            worldController.playerMovementCheck(new IntVector2(lastCheckedPosition));
+        }
 	}
 
 	void Update() {
@@ -65,24 +77,5 @@ public class GameController : MonoBehaviour {
 			uiController.disable();
 			return true;  
 		}
-	}
-
-	void testEvents() {
-		Debug.Log ("Starting testEvents");
-		RandomEvent anEvent = EventFactory.generateEvent ();
-		anEvent.runEvent ();
-
-		for(int i = 0; i < 10; i ++) {
-			if(anEvent.isClosed()) {
-				break;
-			}
-			anEvent.selectAction (0);
-
-		}
-		Debug.Log ("Finished testEvents");
-	}
-
-	void sortEventNames() {
-		EventFactory.sortIds ();
 	}
 }

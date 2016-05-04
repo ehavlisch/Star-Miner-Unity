@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace Industry {
+namespace Economy {
 	public enum IndustryGroup {
 		REFINERY, PRODUCTION, SCIENTIFIC, OIL, MILITARY, ALLOYS, MATERIALS
 	}

@@ -6,37 +6,38 @@ using System.Text;
 
 public class WorldController : MonoBehaviour {
 
-	private WorldNode[,] worldArray;
-	
-	private int chunkSize;
-	private int chunkSpread;
-	private int worldNodeSize;
+    public WorldNode[,] worldArray;
 
-	private float flux;
-	
-	private WorldNode root;
-	
-	private int worldSize;
-	
-	private float shiftFactor = 0.25f;
-	
-	private int worldNodeCount;
-	private int randomSeed;
+    private int chunkSize;
+    private int chunkSpread;
+    private int worldNodeSize;
 
-	private IntVector2 playerChunk;
-	private IntVector2 worldShift;
+    private float flux;
 
-	private Direction needToUnload = Direction.NONE;
+    private WorldNode root;
 
-	private int loadSize = 1;
+    private int worldSize;
 
-	// Lists of the objects - 
-	// TODO should be in a higher class and shared
-	public ArrayList asteroids;
-	public ArrayList planets;
-	public ArrayList stars;
+    private float shiftFactor = 0.25f;
 
-	public void generateWorld() {
+    private int worldNodeCount;
+    private int randomSeed;
+
+    private IntVector2 playerChunk;
+    private IntVector2 worldShift;
+
+    private Direction needToUnload = Direction.NONE;
+
+    private int loadSize = 1;
+
+    // Lists of the objects - 
+    // TODO should be in a higher class and shared
+    private ArrayList asteroids { get; set; }
+    private ArrayList planets { get; set; }
+    private ArrayList stars { get; set; }
+
+    public void generateWorld() {
+        Debug.Log("generateWorld()");
 		init ();
 		generateSystem ();
 		newWorld (25, 10, 0.5f, 0.02f);
@@ -118,6 +119,7 @@ public class WorldController : MonoBehaviour {
 	}
 
 	public void playerMovementCheck(IntVector2 location) {
+		Debug.Log("PlayerMovementCheck. WorldNodeSize: " + worldNodeSize);
 		IntVector2 newPlayerChunk = new IntVector2 (location.x / worldNodeSize, location.y / worldNodeSize);
 
 		if(!newPlayerChunk.Equals(playerChunk)) {
@@ -383,7 +385,7 @@ public class WorldController : MonoBehaviour {
 
 		for(int i = 0; i < chunkSize; i++) {
 			for(int j = 0; j < chunkSize; j++) {
-				float value = worldNode.getMapChunk().getMap()[i, j];
+				float value = worldNode.getMapChunk().map[i, j];
 					// Instantiate or something
 				if(value >= .45 && value <= .55) {
 

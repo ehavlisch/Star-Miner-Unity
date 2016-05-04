@@ -11,22 +11,23 @@ namespace Events {
 		
 		// public to avoid warning
 		public string eventName;
-		
-		private DialogueTree dialogueTree;
-		
-		private bool coms = true;
+
+        public DialogueTree dialogueTree { get; set; }
+
+        public bool coms { get; set; }
 		
 		// The object that triggers the event
-		private Object worldObject;
-		private IntVector2 location;
-		private string id;
-		
-		private bool closed = false;
+		public Object worldObject { get; set; }
+        public IntVector2 location { get; set; }
+        public string id { get; set; }
+
+        private bool closed = false;
 		
 		public Event(string eventName, DialogueTree dialogueTree, string id) {
 			this.eventName = eventName;
 			this.dialogueTree = dialogueTree;
 			this.id = id;
+            coms = true;
 			
 			// placeholder
 			location = new IntVector2(0, 0);

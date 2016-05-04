@@ -4,15 +4,15 @@ namespace Ship
 {
 	
 	public class Engine : Cargo {
-		public float efficiency;
-		public float force;
+		protected float efficiency;
+		protected float force;
 		
-		public float forceLat;
-		public float forceRotate;
+		protected float forceLat;
+		protected float forceRotate;
 
 		// Optional stuff
-		public string mainSound;
-		public string ventSound;
+		protected string mainSound;
+		protected string ventSound;
 		
 		public Engine(float efficiency, float force, float mass, float forceLat, float forceRotate, float volume, float value, string name) {
 			this.efficiency = efficiency;
@@ -37,6 +37,22 @@ namespace Ship
 			} else {
 				return null;
 			}
+		}
+		
+		public float getForce() {
+			return force;
+		}
+		
+		public float getForceLat() {
+			return forceLat;
+		}
+		
+		public float getEfficiency() {
+			return efficiency;
+		}
+		
+		public float getForceRotate() {
+			return forceRotate;
 		}
 	}
 

@@ -22,6 +22,10 @@ public class PlayerController : MonoBehaviour {
 
 	void FixedUpdate() {
 	
+		if(!ship.hasFuel()) {
+			return;
+		}
+	
 		float latThruster = Input.GetAxis ("LatThruster");
 		float mainThruster = Input.GetAxis ("MainThruster");
 		float rotate = Input.GetAxis ("Rotate");
@@ -60,32 +64,37 @@ public class PlayerController : MonoBehaviour {
 		Vector3 dampenAngularVector = new Vector3(0,0,0);
 		Vector3 dampenVector = new Vector3 (0, 0, 0);
 		if (dampening > 0) {
-			engineVolume = 0.7f;
+			engineVolume = 0.6f;
+			// Angular Velocity
 			float aVY = rigidBody.angularVelocity.y;
-			if(aVY > 0.0) {
+			if(aVY > 0.03f) {
 				dampenAngularVector = new Vector3(0, - ship.calculateEngineRotate(),0);
-			} else if(aVY < -0.0) {
+			} else if(aVY < -0.03f) {
 				dampenAngularVector = new Vector3(0, ship.calculateEngineRotate(),0);
+			} else {
+				rigidBody.angularVelocity = new Vector3(0.0f, 0.0f, 0.0f);
 			}
+			// Velocity
+			dampenVector = new Vector3(rigidBody.velocity.x, 0.0f, rigidBody.velocity.z);
 
-			dampenVector = rigidBody.velocity;
-
-			dampenVector *= -1;
-			dampenVector.Normalize();
-
+			(dampenVector *= -1).Normalize();
 			dampenVector *= ship.calculateEngineLatForce();
 		}
 		
 		Vector3 movement = new Vector3 (mainThrusterX, 0, mainThrusterZ);
-
-		bool dampen = (dampenVector.magnitude > 0.0f ? true : false);
+		bool dampen = false;
+		if(rigidBody.velocity.magnitude > 0.0f && rigidBody.velocity.magnitude < 0.03f) {
+			rigidBody.velocity = new Vector3(0.0f, 0.0f, 0.0f);
+		} else if(rigidBody.velocity.magnitude > 0.03f) {
+			dampen = true;
+		}
 		
 		if(precise) {
 			engineVolume = engineVolume * 0.5f;
 			movement *= 0.5f;
 		}
 	
-		if (movement.magnitude > 0 && dampen) {
+		if(movement.magnitude > 0 && dampen) {
 			movement *= 0.8f; 
 			dampenVector *= 0.9f;
 			movement = movement + dampenVector;
@@ -94,24 +103,20 @@ public class PlayerController : MonoBehaviour {
 		} 
 
 		Vector3 angularVector;
-		if (dampenAngularVector.magnitude > 0) {
+		if(dampenAngularVector.magnitude > 0) {
 			angularVector = dampenAngularVector;
-		} else if (rotate != 0) {
+		} else if(rotate != 0) {
 			angularVector = new Vector3 (0, ship.calculateEngineRotate () * rotate, 0);
 		} else {
-			//Apply a tiny bit of friction
+			//Apply a tiny bit of friction? This adds none
 			angularVector = new Vector3(0, 0, 0);
 		}
-		
-		//Bug - after moving, the player will be able to dampen and burn fuel even while sitting still
-		//Fix - when the speed falls below a threshold, zero it out 
-		//Temp fix - when they player's velocity is slow, free fuel (does not consider angular)
 
 		//Check if there's enough fuel to do it
 		float forceTotal = Mathf.Abs (movement.x) + Mathf.Abs (movement.z) + Mathf.Abs (angularVector.y);
-		//Debug.Log (forceTotal + " X: " + movement.x + " Z: " + movement.z + " Y: " + angularVector.y);
+		//Debug.Log ("Total: " + forceTotal + " X: " + movement.x + " Z: " + movement.z + " Y: " + angularVector.y);
 
-		if (rigidBody.velocity.magnitude > .05) {
+		if (forceTotal > 0.03f) {
 			//Debug.Log ("High velocity - subtract fuel");
 			float fuelCost = forceTotal / ship.calculateEngineEfficiency ();
 			float fuelShortage = ship.subtractFuel (fuelCost);
@@ -122,14 +127,11 @@ public class PlayerController : MonoBehaviour {
 				angularVector *= fuelScalar;
 				engineVolume *= fuelScalar;
 			}
-		} else {
-			//Debug.Log("Low Velocity (" + rigidBody.velocity.magnitude + ") - free fuel");
 		}
 
 		ship.setEngineVolume (engineVolume);
 		rigidBody.AddForce (movement);
 		rigidBody.AddTorque (angularVector);
-
 
 		// Testing pull force
 		//float force = -1.0f;
@@ -139,5 +141,5 @@ public class PlayerController : MonoBehaviour {
 		//Energy Updates
 		ship.updateEnergy ();
 
-	}
+    }
 }

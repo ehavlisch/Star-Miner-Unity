@@ -1,33 +1,32 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Industry {
+namespace Economy {
 
 	public class Industry {
-		
-		private int id;
-		private string name;
-		private IndustryGroup group;
-		private int tier;
-		private IndustryStatus status;
-		private string statusMessage;
-		private float cost;
-		
-		private List<IndustryUpgrade> availableIndustryUpgrades;
-		private List<IndustryUpgrade> appliedIndustryUpgrades;
-		private List<Recipe> recipes;
-		private int? activeRecipe;
-		private List<int> forcedActiveRecipes;
-		
-		private int ticks;
-		
-		private IntegerMap resourcesProduced;
 
-		private EconomyStatics economyStatics;
+        public int id;
+        public string name;
+        public IndustryGroup group;
+        public int tier;
+        public IndustryStatus status;
+        public string statusMessage;
+        public float cost;
+
+        public List<IndustryUpgrade> availableIndustryUpgrades;
+        public List<IndustryUpgrade> appliedIndustryUpgrades;
+        public List<Recipe> recipes;
+        public int? activeRecipe;
+        public List<int> forcedActiveRecipes;
+
+        private int ticks;
 		
-		public Industry(EconomyStatics economyStatics, int id, string name, Recipe recipe, IndustryGroup group, int tier) {
+		private Dictionary<int, int> resourcesProduced;
+
+		private EconomySingleton economyStatics;
+		
+		public Industry(EconomySingleton economyStatics, int id, string name, Recipe recipe, IndustryGroup group, int tier) {
 			this.id = id;
 			this.name = name;
 			this.economyStatics = economyStatics;
@@ -38,7 +37,7 @@ namespace Industry {
 			activeRecipe = 0;
 			this.group = group;
 			this.tier = tier;
-			resourcesProduced = new IntegerMap();
+			resourcesProduced = new Dictionary<int, int>();
 			approximateCost();
 		}
 		
@@ -49,11 +48,17 @@ namespace Industry {
 			foreach(Recipe recipe in recipes) {
 				float iterationInput = 0;
 				foreach(int resourceId in recipe.getInputs()) {
-					iterationInput += economyStatics.getResource(resourceId).getBaseValue() * recipe.getInputRatio(resourceId);
+                    Debug.Log("Trying to get resourceId: " + resourceId);
+                    Debug.Log("EconomyStatics: " + economyStatics);
+                    Debug.Log("Recipe:" + recipe);
+                    Debug.Log("Resource: " + economyStatics.getResource(resourceId));
+                    Debug.Log("Resource Base Value: " + economyStatics.getResource(resourceId).baseValue);
+                    Debug.Log("recipe.getInputRatio(resourceId): " + recipe.getInputRatio(resourceId));
+                    iterationInput += economyStatics.getResource(resourceId).baseValue * recipe.getInputRatio(resourceId);
 				}
 				float iterationOutput = 0;
 				foreach(int resourceId in recipe.getOutputs()) {
-					iterationOutput += economyStatics.getResource(resourceId).getBaseValue() * recipe.getOutputPercent(resourceId)/100 * recipe.getOutputRatio(resourceId);
+					iterationOutput += economyStatics.getResource(resourceId).baseValue * recipe.getOutputPercent(resourceId)/100 * recipe.getOutputRatio(resourceId);
 				}
 				avg += iterationOutput - iterationInput;
 				if(iterationOutput < iterationInput) {
@@ -77,24 +82,25 @@ namespace Industry {
 			List<IndustryUpgrade> visibleUpgrades = new List<IndustryUpgrade>();
 			
 			if(appliedIndustryUpgrades != null) {
-				IntegerMap tierMap = new IntegerMap();
+                Dictionary<int, int> tierDict = new Dictionary<int, int>();
 				
 				foreach(IndustryUpgrade u in appliedIndustryUpgrades) {
 					if(u.getTierCategory() != null) {
 						int? t = null;
-						t = tierMap.get(u.getTierCategory().Value);
-						if(t != null) {
-							tierMap.put (u.getTierCategory().Value,  Mathf.RoundToInt(Mathf.Max((float) u.getTier(), (float) t)));
-						} else {
-							tierMap.put(u.getTierCategory().Value, u.getTier().Value);
-						}
+                        int tier;
+                        if(tierDict.TryGetValue(u.getTierCategory().Value, out tier)) {
+                            tierDict[u.getTierCategory().Value] = Mathf.RoundToInt(Mathf.Max((float)u.getTier(), (float)t));
+                        } else {
+                            tierDict[u.getTierCategory().Value] = u.getTier().Value;
+                        }
 					}
 				}
 				
 				foreach(IndustryUpgrade u in availableIndustryUpgrades) {
 					if(u.getTierCategory() != null) {
-						if(tierMap.get(u.getTierCategory().Value) != 0) {
-							if(u.getTier() <= tierMap.get(u.getTierCategory().Value) + 1) {
+                        int value;
+                        if(tierDict.TryGetValue(u.getTierCategory().Value, out value)) { 
+							if(u.getTier() <= tierDict[u.getTierCategory().Value] + 1) {
 								visibleUpgrades.Add(u);
 							}
 						} else {
@@ -160,24 +166,24 @@ namespace Industry {
 			}
 			return sb.ToString();
 		}
-		public IntegerMap getInputs() {
-			IntegerMap map = new IntegerMap();
-			foreach(Recipe recipe in recipes) {
+		public Dictionary<int, int> getInputs() {
+            Dictionary<int, int> inputMap = new Dictionary<int, int>();
+            foreach(Recipe recipe in recipes) {
 				foreach(int resourceId in recipe.getInputs()) {
-					map.add(resourceId, 1);
+                    inputMap[resourceId]++;
 				}
 			}
-			return map;
+			return inputMap;
 		}
-		
-		public IntegerMap getOutputs() {
-			IntegerMap map = new IntegerMap();
-			foreach(Recipe recipe in recipes) {
+
+        public Dictionary<int, int> getOutputs() {
+            Dictionary<int, int> outputMap = new Dictionary<int, int>();
+            foreach (Recipe recipe in recipes) {
 				foreach(int resourceId in recipe.getOutputs()) {
-					map.add(resourceId, 1);
-				}
-			}
-			return map;
+                    outputMap[resourceId]++;
+                }
+            }
+			return outputMap;
 		}
 		
 		/**
@@ -188,7 +194,7 @@ namespace Industry {
 		 * 1 if the industry is running
 		 * 2 if the industry has written to the resourceStockMap (retry other halted industries)
 		 */
-		public IndustryRunResult run(IntegerMap resourceStockMap) {
+		public IndustryRunResult run(Dictionary<int,int> resourceStockDictionary) {
 			switch(status) {
 			case IndustryStatus.DISABLED:
 				return IndustryRunResult.DISABLED;
@@ -198,21 +204,21 @@ namespace Industry {
 				}
 				ticks++;
 				if(ticks == recipes[activeRecipe.Value].getRate()) {
-					tryStart(resourceStockMap);
+					tryStart(resourceStockDictionary);
 				} else {
 					return IndustryRunResult.RUNNING;
 				}
 				outputResources(resourcesProduced);
-				outputResources(resourceStockMap);
+				outputResources(resourceStockDictionary);
 				return IndustryRunResult.PRODUCED;
 			case IndustryStatus.STARTUP:
 			default:
-				return tryStart(resourceStockMap);
+				return tryStart(resourceStockDictionary);
 			}
 		}
 		
-		private IndustryRunResult tryStart(IntegerMap resourceStockMap) {
-			if(canRun(resourceStockMap)) {
+		private IndustryRunResult tryStart(Dictionary<int, int> resourceStockDictionary) {
+			if(canRun(resourceStockDictionary)) {
 				ticks = 1;
 				status = IndustryStatus.RUNNING;
 				statusMessage = "Industry Running smoothly.";
@@ -223,16 +229,18 @@ namespace Industry {
 			}
 		}
 		
-		private bool canRun(IntegerMap resourceStockMap) {
+		private bool canRun(Dictionary<int, int> resourceStockDictionary) {
 			foreach(Recipe recipe in recipes) {
 				bool canRun = true;
 				foreach(int resourceId in recipe.getInputs()) {
-					int resourceStock = resourceStockMap.get(resourceId);
-					if(resourceStock < recipe.getInputRatio(resourceId)) {
-						statusMessage = "Industry Halted. Missing " + resourceId + ".";
-						canRun = false;
-						break;
-					}
+					int resourceStock;
+                    if(resourceStockDictionary.TryGetValue(resourceId, out resourceStock)) {
+                        if (resourceStock < recipe.getInputRatio(resourceId)) {
+                            statusMessage = "Industry Halted. Missing " + resourceId + ".";
+                            canRun = false;
+                            break;
+                        }
+                    } 
 				}
 				if(canRun) {
 					activeRecipe = recipes.IndexOf(recipe);
@@ -240,7 +248,7 @@ namespace Industry {
 						continue;
 					}
 					foreach(int resourceId in recipe.getInputs()) {
-						resourceStockMap.add(resourceId, resourceStockMap.get(resourceId) - recipe.getInputRatio(resourceId));
+                        resourceStockDictionary[resourceId] -= recipe.getInputRatio(resourceId);
 					}
 					return true;
 				}
@@ -252,7 +260,7 @@ namespace Industry {
 		 * Write the output of the industry into the resourceStockMap
 		 * @param industryResourceStockMap
 		 */
-		private void outputResources(IntegerMap industryResourceStockMap) {
+		private void outputResources(Dictionary<int, int> resourceStockDictionary) {
 			//Random random = new Random();
 			foreach(int resourceId in recipes[activeRecipe.Value].getOutputs()) {
 				int resourceCount = 0;
@@ -261,12 +269,8 @@ namespace Industry {
 						resourceCount++;
 					}
 				}
-				addIndustryResource(industryResourceStockMap, resourceId, resourceCount);
-			}
-		}
-		
-		private void addIndustryResource(IntegerMap industryResourceStockMap, int resourceId, int amount) {
-			industryResourceStockMap.add(resourceId, amount);
+                resourceStockDictionary[resourceId] += resourceCount;
+            }
 		}
 		
 		public void addActiveRecipe(int index) {

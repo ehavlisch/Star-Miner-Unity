@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Industry {
+namespace Economy {
 	public class IndustryUpgrade {
 		private string name;
 		private IndustryUpgradeType upgradeType;

@@ -6,36 +6,36 @@ using System.Text;
 
 public class MapChunk {
 
-	// Required for regeneration
-	private int randomSeed;
-	private int worldNodeId;
+    // Required for regeneration
+    private int randomSeed;
+    private int worldNodeId;
 
+    public float[,] map { get; set; }
 
-	private float[,] map;
+    private int size;
+    private float flux;
 
-	public int size;
-	private float flux;
+    // Values for root node
+    private bool isRoot = false;
+    // public to avoid warning
+    public float startValue;
 
-	// Values for root node
-	private bool isRoot = false;
-	private float startValue;
+    // Edges for neighboring maps
+    private float[] left;
+    private float[] right;
+    private float[] top;
+    private float[] bot;
 
-	// Edges for neighboring maps
-	private float[] left;
-	private float[] right;
-	private float[] top;
-	private float[] bot;
+    // Safe to empty
+    private Queue<IntVector2> toDo;
+    private bool[,] mapWritten;
+    public bool[,] mapPending;
 
-	// Safe to empty
-	private Queue<IntVector2> toDo;
-	private bool[,] mapWritten;
-	private bool[,] mapPending;
+    //TODO this should be used for regenerating chunks, but it seems like it can't be instantiated...
+    //Might have to change this to reset the seed before regenerating in the UnityEngine...
 
-	//TODO this should be used for regenerating chunks, but it seems like it can't be instantiated...
-	//Might have to change this to reset the seed before regenerating in the UnityEngine...
-
-	// should default to false
-	private bool filled = false;
+    // should default to false
+    public bool filled { get; set; }
 
 	// Unsure if we can empty
 	float[] buckets;
@@ -100,7 +100,7 @@ public class MapChunk {
 						//Debug.Log ("Adding right col of neighbor to the left, enque left col into toDo");
 						left = new float[size];
 						for (int j = 0; j < size; j++) {
-							left [j] = neighbor.getMap () [j, size - 1];
+							left [j] = neighbor.map[j, size - 1];
 							toDo.Enqueue (new IntVector2 (j, 0));
 						}
 						break;
@@ -110,7 +110,7 @@ public class MapChunk {
 						//Debug.Log ("Adding bot row of neighbor on top, enque top row into toDo");
 						top = new float[size];
 						for (int j = 0; j < size; j++) {
-							top [j] = neighbor.getMap () [size - 1, j];
+							top [j] = neighbor.map[size - 1, j];
 							toDo.Enqueue (new IntVector2 (0, j));
 						}
 						break;
@@ -120,7 +120,7 @@ public class MapChunk {
 						//Debug.Log ("Adding top row of neighbor below, enque bot row into toDo");
 						bot = new float[size];
 						for (int j = 0; j < size; j++) {
-							bot [j] = neighbor.getMap () [0, j];
+							bot [j] = neighbor.map[0, j];
 							toDo.Enqueue (new IntVector2 (size - 1, j));
 						}
 						break;
@@ -130,7 +130,7 @@ public class MapChunk {
 						//Debug.Log ("Adding left col of neighbor to the right, enque the right col into toDo");
 						right = new float[size];
 						for (int j = 0; j < size; j++) {
-							right [j] = neighbor.getMap () [j, 0];
+							right [j] = neighbor.map[j, 0];
 							toDo.Enqueue (new IntVector2 (j, size - 1));
 						}
 						break;
@@ -533,13 +533,5 @@ public class MapChunk {
 
 	public float getMap(int x, int y) {
 		return map [x, y];
-	}
-
-	public float[,] getMap() {
-		return map;
-	}
-
-	public Boolean isFilled() {
-		return filled;
 	}
 }

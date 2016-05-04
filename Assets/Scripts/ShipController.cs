@@ -113,29 +113,21 @@ public class ShipController : MonoBehaviour {
 		for (int i = 0; i < maxWeapons; i++) {
 			Weapon weapon = weapons[i];
 			if(weapon != null) {
-				if(Time.time > weapon.getNextFire()) {
-					if(energy > weapon.energyCost) {
-						GameObject projectileObject = (GameObject)Instantiate (Resources.Load(weapon.projectileName), shotSpawns[i].position , shotSpawns[i].rotation);
-						Projectile projectile = projectileObject.GetComponent <Projectile>();
-
+				if(weapon.ready()) {
+					if(energy > weapon.getEnergyCost()) {
+						GameObject projectileObject = (GameObject)Instantiate (Resources.Load(weapon.getProjectileName()), shotSpawns[i].position, shotSpawns[i].rotation);
+						
+						weapon.initProjectile(projectileObject, angle, GetComponent<Rigidbody>().velocity);
+						
+						// The projectile can not hit the player. Also lights cannot hit the player either
 						Physics.IgnoreCollision(projectileObject.GetComponent<Collider>(), GetComponent<Collider>());
-
-						float projectileVelocityX = Mathf.Sin (angle) * weapon.projectileSpeed;
-						float projectileVelocityZ = Mathf.Cos (angle) * weapon.projectileSpeed;
-						projectile.damage = weapon.damage;
-						projectile.force = weapon.force;
-
-						if(weapon.recoil) {
-							float recoilX = - Mathf.Sin (angle) * weapon.recoilForce;
-							float recoilZ = - Mathf.Cos (angle) * weapon.recoilForce;
-
-							GetComponent<Rigidbody>().AddForce(new Vector3(recoilX, 0.0f, recoilZ));
+						
+						if(weapon.hasRecoil()) {
+							GetComponent<Rigidbody>().AddForce(weapon.getRecoil(angle));
 						}
 
-						Vector3 projectileVelocity = new Vector3(projectileVelocityX, 0, projectileVelocityZ);
-						projectile.GetComponent<Rigidbody>().velocity = (projectileVelocity + GetComponent<Rigidbody>().velocity);
-						weapon.setNextFire(Time.time);
-						energy -= weapon.energyCost;
+						weapon.fire();
+						energy -= weapon.getEnergyCost();
 					}
 				}
 			}
@@ -169,6 +161,15 @@ public class ShipController : MonoBehaviour {
 		}
 
 		return power;
+	}
+	
+	public bool hasFuel() {
+		foreach(FuelTank ft in fuelTanks) {
+			if(ft.hasFuel()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public float calculateMass() {
@@ -213,7 +214,7 @@ public class ShipController : MonoBehaviour {
 	public float calculateEngineForce() {
 		float totalForce = 0.0f;
 		foreach (Engine e in engines) {
-			totalForce += e.force;
+			totalForce += e.getForce();
 		}
 		return totalForce;
 	}
@@ -221,7 +222,7 @@ public class ShipController : MonoBehaviour {
 	public float calculateEngineLatForce() {
 		float totalForce = 0.0f;
 		foreach (Engine e in engines) {
-			totalForce += e.forceLat;
+			totalForce += e.getForceLat();
 		}
 		return totalForce;
 	}
@@ -229,7 +230,7 @@ public class ShipController : MonoBehaviour {
 	public float calculateEngineEfficiency() {
 		float totalEff = 0.0f;
 		foreach (Engine e in engines) {
-			totalEff += e.efficiency;
+			totalEff += e.getEfficiency();
 		}
 		return totalEff;
 	}
@@ -237,7 +238,7 @@ public class ShipController : MonoBehaviour {
 	public float calculateEngineRotate() {
 		float totalForce = 0.0f;
 		foreach (Engine e in engines) {
-			totalForce += e.forceRotate;
+			totalForce += e.getForceRotate();
 		}
 		return totalForce;
 	}
@@ -342,13 +343,18 @@ public class FuelTank : Cargo{
 		this.mass = mass;
 		this.tankDurability = tankDurability;
 	}
+	
+	public bool hasFuel() {
+		return fuelVolume > 0;
+	}
 
 	public float subtractFuel(float power) {
 		float volume = power / fuelType.efficiency;
 		if (fuelVolume - volume < 0) {
-			float temp = fuelVolume * fuelType.efficiency;
+			// Drain the tank
+			float remainingPower = fuelVolume * fuelType.efficiency;
 			fuelVolume = 0;
-			return temp;
+			return remainingPower;
 		} else {
 			fuelVolume -= volume;
 			return power;

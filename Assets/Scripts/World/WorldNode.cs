@@ -19,14 +19,14 @@ public class WorldNode {
 
 	public Boolean isLoaded() {
 		//TODO one line this bitch
-		if(mapChunk == null || !mapChunk.isFilled()) {
+		if(mapChunk == null || !mapChunk.filled) {
 			return false;
 		} 
 		return true;
 	}
 
 	public Boolean load() {
-		if(!mapChunk.isFilled()) {
+		if(!mapChunk.filled) {
 			mapChunk.reFill();
 			return true;
 		}
@@ -34,7 +34,7 @@ public class WorldNode {
 	}
 	
 	public void unload() {
-		if(mapChunk.isFilled()) {
+		if(mapChunk.filled) {
 			mapChunk.empty();
 		}
 	}
