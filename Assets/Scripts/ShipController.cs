@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using Ship;
+using Economy;
 
 public class ShipController : MonoBehaviour {
 
@@ -46,7 +47,7 @@ public class ShipController : MonoBehaviour {
 		generators = new List<Generator> (maxGenerators);
 		cargoBays = new List<CargoBay> (maxCargoBays);
 
-		fuelTanks.Add (new FuelTank (new FuelType (1, 100), 100, 100, 5, 100));	
+		fuelTanks.Add (new FuelTank (new FuelType (1.0f, 100.0f), 100.0f, 100.0f, 5.0f, 100.0f, 100.0f, "Basic Fuel Tank", 100.0f));	
 		maxFuel = calculateMaxFuelVolume ();
 
 		engines.Add (new GenericEngine());
@@ -281,14 +282,9 @@ public class Generator : Cargo {
 	public float maxEnergy;
 	public float rechargeRate;
 
-	public Generator(float mass, float maxEnergy, float rechargeRate, float volume, float value, string name) {
-		this.mass = mass;
+	public Generator(float mass, float maxEnergy, float rechargeRate, float volume, float value, string name) : base(CargoType.GENERATOR, mass, volume, name, value, "generator") {
 		this.maxEnergy = maxEnergy;
 		this.rechargeRate = rechargeRate;
-
-		this.volume = volume;
-		this.value = value;
-		this.name = name;
 	}
 }
 
@@ -297,7 +293,7 @@ public class CargoBay : Cargo {
 	public float filledVolume;
 	public List<Cargo> cargo;
 
-	public CargoBay(float volume, float mass, float value, string name) {
+	public CargoBay(float volume, float mass, float value, string name) : base(CargoType.CARGO_BAY, mass, volume, name, value, "cargobay") {
 		this.volume = volume;
 		this.mass = mass;
 		this.value = value;
@@ -325,7 +321,7 @@ public class CargoBay : Cargo {
 	}
 }
 
-public class FuelTank : Cargo{
+public class FuelTank : Cargo {
 	//d = mass / volume;
 	public FuelType fuelType;
 
@@ -336,11 +332,10 @@ public class FuelTank : Cargo{
 
 	public float tankDurability;
 
-	public FuelTank(FuelType fuelType, float fuelVolume, float tankVolume, float mass, float tankDurability) {
+	public FuelTank(FuelType fuelType, float fuelVolume, float tankVolume, float mass, float tankDurability, float volume, string name, float value) : base(CargoType.FUEL_TANK, mass, volume, name, value, "fueltank") {
 		this.fuelType = fuelType;
 		this.fuelVolume = fuelVolume;
 		this.tankVolume = tankVolume;
-		this.mass = mass;
 		this.tankDurability = tankDurability;
 	}
 	

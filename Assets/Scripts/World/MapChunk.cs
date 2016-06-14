@@ -18,7 +18,7 @@ public class MapChunk {
     // Values for root node
     private bool isRoot = false;
     // public to avoid warning
-    public float startValue;
+    public float startValue = 0.5f;
 
     // Edges for neighboring maps
     private float[] left;
@@ -41,30 +41,6 @@ public class MapChunk {
 	float[] buckets;
 
 	int count;
-
-	/*
-	public MapChunk(int size, float startValue, float flux, int randomSeed, int worldNodeId) {
-		this.size = size;
-		this.flux = flux;
-		this.startValue = startValue;
-		int start = (int) Mathf.Floor(size/2);
-		this.randomSeed = randomSeed;
-		UnityEngine.Random.seed = randomSeed;
-		this.worldNodeId = worldNodeId;
-		isRoot = true;
-		
-		init();
-		
-		map[start, start] = startValue;
-		mapPending [start, start] = true;
-		mapWritten[start, start] = true;
-		
-		addAdjacent(start, start);
-
-		// Use the other fill logic below to populate a map based on percentages of materials
-		generateMap();
-	}
-	*/
 
 	public MapChunk(int size, float flux, MapChunk[] neighbors, int[] locations, int randomSeed, int worldNodeId) {
 		this.size = size;
@@ -152,44 +128,9 @@ public class MapChunk {
 		map = new float[size, size];
 		mapWritten = new bool[size, size];
 		mapPending = new bool[size, size];
-		buckets = new float[10];
+		buckets = new float[9];
 		filled = false;
 		count = 0;
-	}
-
-	//FIXME this method won't be called ever, keeping it around for reference for a bit
-	void Start() {
-		//TODO
-		// This map instantiation should be done at a higher level
-		// Also, this generates a chunk centered at 0,0 
-		// This raises a good point though, the world is going to need to generate
-		// an area based off it's location and the spread, so this logic is good, 
-		//but needs to be extended for multiple chunks
-		/*
-		int spread = 10;
-
-		for (int i = - size / 2; i < size / 2; i++) {
-			int mapI = i + size/2;
-			for(int j = - size / 2; j < size / 2; j++) {
-				int mapJ = j + size / 2;
-				if(i == 0 && j == 0) continue;
-
-				if(map[mapI,mapJ] >= .45 && map[mapI,mapJ] <= .55) {
-					float randomX = Random.Range(-1.0f, 1.0f) * spread / 2;
-					float randomZ = Random.Range(-1.0f, 1.0f) * spread / 2;
-					Quaternion rotation = new Quaternion(Random.value, Random.value, Random.value, Random.value);
-					Vector3 position = new Vector3(i * spread + randomX, 0, j * spread + randomZ);
-
-					GameObject asteroidObject = (GameObject) Instantiate (getAsteroid(), position , rotation);
-					asteroidObject.transform.parent = this.transform;
-					AsteroidController asteroid = (AsteroidController) asteroidObject.GetComponent ("AsteroidController");
-					asteroid.setLocation(new IntVector2(mapI, mapJ));
-					asteroid.setValue(map[mapI, mapJ]);
-					asteroid.setWorld (this);
-				}
-			}
-		}
-		*/
 	}
 
 	public void reFill() {
@@ -252,8 +193,8 @@ public class MapChunk {
 			Debug.Log ("SEVERE: Trying to generate a map chunk with no neighbors.");
 		}
 
-		//Debug.Log ("Filling a mapchunk");
-		
+        //Debug.Log ("Filling a mapchunk");
+        int revertSeed = UnityEngine.Random.seed;
 		UnityEngine.Random.seed = randomSeed + worldNodeId; 
 
 		while (toDo.Count > 0) {
@@ -288,7 +229,15 @@ public class MapChunk {
 			}
 		}
 		filled = true;
-		return size * size;
+        UnityEngine.Random.seed = revertSeed;
+
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < 9; i++) {
+            sb.Append("Bucket[" + i + "]=" + buckets[i] + "\n");
+        }
+        Debug.Log(sb.ToString());
+
+        return size * size;
 	}
 
 
@@ -301,48 +250,61 @@ public class MapChunk {
 		float lowerBound = avg - flux;
 		float upperBound = avg + flux;
 
+        if(lowerBound < 0) {
+            lowerBound = 0.0f;
+            upperBound = 0.0f + flux;
+        }
+        if(upperBound > 1.0f) {
+            upperBound = 1.0f;
+            lowerBound = 1.0f - flux;
+        }
+
 		if (count < size) {
 			map [pos.x, pos.y] = UnityEngine.Random.Range (lowerBound, upperBound);
 		} else {
-
-			while (map[pos.x, pos.y] <= 0.0f || map[pos.x, pos.y] >= 1.0f 
-			       //Some issues with this right now, we hit loop counts a bunch even with check percentages running only after a certain period of time
-			       || (distributionOk = checkPercentages (map[pos.x, pos.y],buckets,count)) > 0
-			       ) {
+            float value = UnityEngine.Random.Range(lowerBound, upperBound);
+            distributionOk = checkPercentages(value, buckets, count);
+            while (value < 0.0f || value > 1.0f || distributionOk != 0) {
 				loopCounts ++;
-				if (loopCounts > size) {
-					//Debug.LogWarning ("Reached loopCounts! " + distributionOk + " Failed to generate in range: " + lowerBound + " to " + upperBound);
+				if (loopCounts > 10) {
+					Debug.LogWarning ("Reached loopCounts! " + distributionOk + " Failed to generate in range: " + lowerBound + " to " + upperBound + " Based on avg: " + avg);
 					map[pos.x, pos.y] = upperBound - lowerBound / 2.0f;
 					return;
 				}
 				if (distributionOk == 1) {
 					// High end - increase negative flux, decrease positive flux
-					lowerBound += flux;
+					lowerBound -= flux;
 					upperBound -= flux;
 				} else if (distributionOk == 2) {
 					// Low end - increase positive flux, decrease negative flux
-					lowerBound -= flux;
+					lowerBound += flux;
 					upperBound += flux;
-				}
+				} else if(distributionOk == 3) {
+                    // Shift to one of the random buckets above or below the middle one
+                    if(UnityEngine.Random.value > 0.5) {
+                        lowerBound += .1f;
+                        upperBound += .1f;
+                    } else {
+                        lowerBound -= .1f;
+                        upperBound -= .1f;
+                    }
+                }
+
+
+                if (lowerBound < 0) {
+                    lowerBound = 0.0f;
+                    upperBound = 0.0f + flux;
+                }
+                if (upperBound > 1.0f) {
+                    upperBound = 1.0f;
+                    lowerBound = 1.0f - flux;
+                }
 				
-				if (lowerBound < 0.0f) {
-					lowerBound = 0;
-				}
-				if (upperBound > 1.0f) {
-					upperBound = 1;
-				}
-				if(upperBound < lowerBound || lowerBound > upperBound) {
-					float temp = upperBound;
-					upperBound = lowerBound;
-					lowerBound = temp;
-				} else if(upperBound == lowerBound) {
-					map[pos.x, pos.y] = upperBound;
-					return;
-				}
-				
-				map [pos.x, pos.y] = UnityEngine.Random.Range (lowerBound, upperBound);
+				value = UnityEngine.Random.Range (lowerBound, upperBound);
+                distributionOk = checkPercentages(value, buckets, count);
 			}
-		}
+            map[pos.x, pos.y] = value;
+        }
 	}
 
 	private void addAdjacent(IntVector2 v) {
@@ -413,40 +375,33 @@ public class MapChunk {
 		return avg/count;
 	}
 
+    // Check if the var fits into the buckets without violating the limits
+    // Return 1 if it overflows a bucket and should be lowered
+    // Return 2 if it overflows a bucket and should be raised
+    // Return 3 if it overflows a bucket near the center of the distribution
+    // Return 0 if it does not overflow a bucket
 	private int checkPercentages(float var, float[] b, float count) {
-		if(var == 1.0) {
-			if((1.0f + b[10])/count * 100 > 1 && count > size) {
-				return 1;
-			}
-			b[10]++;
-			return 0;
-		} else if(var >= 0.9) {
-			if((1.0f +  b[9])/count * 100 > 5 && count > size) {
-				return 1;
-			}
-			b[9]++;
-			return 0;
-		} else if(var >= 0.8) {
-			if((1.0f + b[8])/count * 100 > 10 && count > size) {
+        if(var >= 0.9) {
+			if((1.0f + b[8] + b[0])/count * 100 > 1 && count > size) {
 				return 1;
 			}
 			b[8]++;
 			return 0;
-		} else if(var >= 0.7) {
-			if((1.0f + b[7])/count * 100 > 40 && count > size) {
+		} else if(var >= 0.8) {
+			if((1.0f + b[7] + b[1])/count * 100 > 5 && count > size) {
 				return 1;
 			}
 			b[7]++;
 			return 0;
-		} else if(var >= 0.6) {
-			if((1.0f + b[6])/count * 100 > 90 && count > size) {
-				return 3;
+		} else if(var >= 0.7) {
+			if((1.0f + b[6] + b[2])/count * 100 > 10 && count > size) {
+				return 1;
 			}
 			b[6]++;
 			return 0;
-		} else if(var >= 0.5) {
-			if((1.0f + b[5])/count * 100 > 100 && count > size) {
-				return 3;
+		} else if(var >= 0.6) {
+			if((1.0f + b[5] + b[3])/count * 100 > 40 && count > size) {
+				return 1;
 			}
 			b[5]++;
 			return 0;
@@ -457,25 +412,25 @@ public class MapChunk {
 			b[4]++;
 			return 0;
 		} else if(var >= 0.3) {
-			if((1.0f + b[3])/count * 100 > 40 && count > size) {
+			if((1.0f + b[3] + b[5])/count * 100 > 40 && count > size) {
 				return 2;
 			}
 			b[3]++;
 			return 0;
 		} else if(var >= 0.2) {
-			if((1.0f + b[2])/count * 100 > 10 && count > size) {
+			if((1.0f + b[2] + b[6])/count * 100 > 10 && count > size) {
 				return 2;
 			}
 			b[2]++;
 			return 0;
 		} else if(var >= 0.1) {
-			if((1.0f + b[1])/count * 100 > 5 && count > size) {
+			if((1.0f + b[1] + b[7])/count * 100 > 5 && count > size) {
 				return 2;
 			}
 			b[1]++;
 			return 0;
 		} else if(var >= 0) {
-			if((1.0f + b[0])/count * 100 > 1 && count > size) {
+			if((1.0f + b[0] + b[8])/count * 100 > 1 && count > size) {
 				return 2;
 			}
 			b[0]++;
@@ -486,26 +441,26 @@ public class MapChunk {
 	}
 
 	public static string getChars(float value) {
-		if(value > 0.90000f) {
-			return ".";
-		} else if(value > 0.80000f) {
-			return "$";
-		} else if(value > 0.70000f) {
-			return "\\";
-		} else if(value > 0.60000f){
-			return "|";
-		} else if(value > 0.50000f) {
-			return "+";
-		} else if(value > 0.40000f) {
+		if(value > 0.90f) {
+			return "0";
+		} else if(value > 0.8f) {
 			return "-";
-		} else if(value > 0.30000f) {
-			return "/";
-		} else if(value > 0.20000f) {
-			return "#";
-		} else if(value > 0.10000f) {
-			return ".";
+		} else if(value > 0.7f) {
+			return "*";
+		} else if(value > 0.6f){
+			return "+";
+		} else if(value > 0.5f) {
+			return "A";
+		} else if(value > 0.4f) {
+			return "A";
+		} else if(value > 0.3f) {
+			return "+";
+		} else if(value > 0.2f) {
+			return "*";
+		} else if(value > 0.1f) {
+			return "-";
 		} else if(value > 0.0f) {
-			return ":";
+			return "0";
 		} else {
 			return "?";
 		}

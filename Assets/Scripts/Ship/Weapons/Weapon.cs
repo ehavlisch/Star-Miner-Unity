@@ -1,16 +1,18 @@
 ﻿using UnityEngine;
-using System.Collections;
+using Economy;
 
 namespace Ship {
 
-public class Weapon {
+public class Weapon : Cargo {
 
 	protected float energyCost, damage, reloadSpeed, force, recoilForce, projectileSpeed, nextFire;
 	protected bool ammo, recoil;
 	protected int ammoType;
 	protected string projectileName;
 
-	public Weapon(float energyCost, bool ammo, float damage, float reloadSpeed, float force, float recoilForce, float projectileSpeed, string projectileName) {
+	public Weapon(float energyCost, bool ammo, float damage, float reloadSpeed, float force, float recoilForce, 
+        float projectileSpeed, string projectileName, float mass, float volume, string name, float value) : base(CargoType.WEAPON, mass, volume, name, value, "weapon") {
+        
 		this.energyCost = energyCost;
 		this.ammo = ammo;
 		this.damage = damage;
@@ -22,6 +24,8 @@ public class Weapon {
 		}
 		this.projectileSpeed = projectileSpeed;
 		this.projectileName = projectileName;
+
+        
 	}
 	
 	public string getProjectileName() {
@@ -70,7 +74,7 @@ public class Weapon {
 
 	public class SimpleLaser : Weapon {
 
-		public SimpleLaser() : base (5, false, 30, 0.25f, 40, 20, 8, "LaserBolt") {
+		public SimpleLaser() : base (5, false, 30, 0.25f, 40, 20, 8, "LaserBolt", 10, 10, "Simple Laser", 100) {
 		}
 	}
 

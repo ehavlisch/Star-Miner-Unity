@@ -3,6 +3,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using Util;
+using Tests;
 
 public class WorldController : MonoBehaviour {
 
@@ -35,12 +37,17 @@ public class WorldController : MonoBehaviour {
     private ArrayList asteroids { get; set; }
     private ArrayList planets { get; set; }
     private ArrayList stars { get; set; }
+    private Dictionary<String, GameObject> pickups;
+    private GameObject defaultPickup;
 
     public void generateWorld() {
-        Debug.Log("generateWorld()");
-		init ();
+        TestUtils.Instance.startTimer("generateWorld");
+        randomSeed = Utils.randomInt(int.MinValue, int.MaxValue);
+        Debug.Log("generateWorld(). Seed: " + randomSeed + ".");
+        init ();
 		generateSystem ();
-		newWorld (25, 10, 0.5f, 0.02f);
+		newWorld (25, 10, 0.5f, 0.1f);
+        Debug.Log("generateWorld() Complete. " + TestUtils.Instance.endTimer("generateWorld") + "ms elapsed.");
 	}
 
 	private void init () {
@@ -60,6 +67,11 @@ public class WorldController : MonoBehaviour {
 		stars = new ArrayList ();
 		stars.Add (Resources.Load ("Star01"));
 
+        // TODO load a bunch of different looking resource pickups here for the different types
+        // need to handle: 'weapon', 'generator', 'engine', 'resource' + id, 'cargobay', 'fueltank'
+        pickups = new Dictionary<String, GameObject>();
+        // TODO Resource.Load something there for the default pickup.
+        defaultPickup = new GameObject();
 	}
 	
 	// Generates Planets
@@ -78,8 +90,7 @@ public class WorldController : MonoBehaviour {
 			float distanceZ = Mathf.Cos (angle) * distanceFromSun;
 			
 			GameObject planetObject = (GameObject) Instantiate (getPlanet (), new Vector3(distanceX, 0, distanceZ), Quaternion.identity);
-			planetObject.transform.parent = this.transform;
-			
+			planetObject.transform.parent = this.transform;			
 		}
 	}
 
@@ -106,6 +117,15 @@ public class WorldController : MonoBehaviour {
 		loadAdjacentChunks(Direction.NONE);
 	}
 
+    public GameObject getPickup(String name) {
+        GameObject result;
+        if(pickups.TryGetValue(name, out result)) {
+            return result;
+        } else {
+            return defaultPickup;
+        }
+    }
+
 	public GameObject getAsteroid() {
 		return (GameObject) asteroids[Mathf.FloorToInt (UnityEngine.Random.Range (0, asteroids.Count))];
 	}
@@ -120,6 +140,12 @@ public class WorldController : MonoBehaviour {
 
 	public void playerMovementCheck(IntVector2 location) {
 		Debug.Log("PlayerMovementCheck. WorldNodeSize: " + worldNodeSize);
+        // Optimization: Remove this if check, worldNodeSize should never be 0
+        if(worldNodeSize == 0) {
+            Debug.LogWarning("World Node Size is 0!");
+            return;
+        }
+
 		IntVector2 newPlayerChunk = new IntVector2 (location.x / worldNodeSize, location.y / worldNodeSize);
 
 		if(!newPlayerChunk.Equals(playerChunk)) {

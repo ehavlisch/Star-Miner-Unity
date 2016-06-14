@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace Economy {
 	public enum IndustryGroup {
-		REFINERY, PRODUCTION, SCIENTIFIC, OIL, MILITARY, ALLOYS, MATERIALS
+		REFINERY, PRODUCTION, SCIENTIFIC, OIL, MILITARY, ALLOYS, MATERIALS, PLANETARY
 	}
 
 	public enum IndustryStatus {

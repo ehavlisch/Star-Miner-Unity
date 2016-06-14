@@ -2,6 +2,8 @@
 using System.Collections;
 
 using Ship;
+using Economy;
+using Util;
 
 public class AsteroidController : MonoBehaviour {
 
@@ -80,13 +82,18 @@ public class AsteroidController : MonoBehaviour {
 					//AsteroidController asteroid = (AsteroidController) Instantiate (this, gameObject.transform.position + updatedPosition , gameObject.transform.rotation);
 
 					GameObject asteroidObject = (GameObject) Instantiate (world.getAsteroid(), gameObject.transform.position + updatedPosition , gameObject.transform.rotation);
-					asteroidObject.transform.parent = this.transform.parent;
+					asteroidObject.transform.parent = transform.parent;
 					AsteroidController asteroid = (AsteroidController) asteroidObject.GetComponent ("AsteroidController");
 					asteroid.fragment(value, splits, maxHealth, world);
 					//Physics.IgnoreCollision(gameObject.GetComponent<Collider>(), asteroid.GetComponent<Collider>());
 				}
 			} else {
 				Debug.Log ("IMPLEMENT: Asteroid destroyed - spawn loot");
+                Cargo cargo = spawnAsteroidLoot();
+                GameObject pickupObject = (GameObject) Instantiate(world.getPickup(cargo.pickupName), gameObject.transform.position, gameObject.transform.rotation);
+                pickupObject.transform.parent = transform.parent;
+                PickupController pickup = pickupObject.GetComponent<PickupController>();
+                pickup.cargo = cargo;
 			}
 			Destroy (gameObject);
 		}
@@ -99,6 +106,18 @@ public class AsteroidController : MonoBehaviour {
 			rb.angularVelocity = rb.angularVelocity * 0.8f;
 		}
 	}
+
+    private Cargo spawnAsteroidLoot() {
+        Resource resource = EconomySingleton.Instance.getRandomResource(value);
+
+        // TODO apply some logic around the count of the resource. 
+        // If a mining weapon was used, amount is higher
+        // If a super heavy weapon was used, amount is lower.
+        // Could do this based on how far below 0 the health is. 
+        Cargo cargo = new ResourceCargo(resource, Utils.randomInt(10, 20));
+
+        return cargo;
+    }
 
 	void OnCollisionEnter(Collision col) {
 		Projectile projectile = col.transform.GetComponent<Projectile> ();

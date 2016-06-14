@@ -13,6 +13,7 @@ namespace Economy {
         public IndustryStatus status;
         public string statusMessage;
         public float cost;
+        public bool playerOwned;
 
         public List<IndustryUpgrade> availableIndustryUpgrades;
         public List<IndustryUpgrade> appliedIndustryUpgrades;
@@ -25,8 +26,9 @@ namespace Economy {
 		private Dictionary<int, int> resourcesProduced;
 
 		private EconomySingleton economyStatics;
-		
-		public Industry(EconomySingleton economyStatics, int id, string name, Recipe recipe, IndustryGroup group, int tier) {
+
+        // EconomySingleton is necessary as an argument or it gets stuck in the static initialization
+        public Industry(EconomySingleton economyStatics, int id, string name, Recipe recipe, IndustryGroup group, int tier) {
 			this.id = id;
 			this.name = name;
 			this.economyStatics = economyStatics;
@@ -39,6 +41,7 @@ namespace Economy {
 			this.tier = tier;
 			resourcesProduced = new Dictionary<int, int>();
 			approximateCost();
+            playerOwned = false;
 		}
 		
 		public void approximateCost() {
@@ -48,12 +51,6 @@ namespace Economy {
 			foreach(Recipe recipe in recipes) {
 				float iterationInput = 0;
 				foreach(int resourceId in recipe.getInputs()) {
-                    Debug.Log("Trying to get resourceId: " + resourceId);
-                    Debug.Log("EconomyStatics: " + economyStatics);
-                    Debug.Log("Recipe:" + recipe);
-                    Debug.Log("Resource: " + economyStatics.getResource(resourceId));
-                    Debug.Log("Resource Base Value: " + economyStatics.getResource(resourceId).baseValue);
-                    Debug.Log("recipe.getInputRatio(resourceId): " + recipe.getInputRatio(resourceId));
                     iterationInput += economyStatics.getResource(resourceId).baseValue * recipe.getInputRatio(resourceId);
 				}
 				float iterationOutput = 0;
@@ -71,7 +68,7 @@ namespace Economy {
 			avg *= group.getIndustryPriceModifier();
 			
 			avg *= (50.0f * (3.0f + tier));
-			this.cost = Mathf.Round(avg);
+			cost = Mathf.Round(avg);
 			//System.out.println(name + "\n" + avg + " -- " + " Even: " + (50 * (3 + tier) * group.getIndustryPriceModifier()));
 		}
 		
@@ -166,21 +163,30 @@ namespace Economy {
 			}
 			return sb.ToString();
 		}
-		public Dictionary<int, int> getInputs() {
+
+		public Dictionary<int, int> getAllInputs() {
             Dictionary<int, int> inputMap = new Dictionary<int, int>();
             foreach(Recipe recipe in recipes) {
 				foreach(int resourceId in recipe.getInputs()) {
-                    inputMap[resourceId]++;
+                    if(inputMap.ContainsKey(resourceId)) {
+                        inputMap[resourceId]++;
+                    } else {
+                        inputMap.Add(resourceId, 1);
+                    }
 				}
 			}
 			return inputMap;
 		}
 
-        public Dictionary<int, int> getOutputs() {
+        public Dictionary<int, int> getAllOutputs() {
             Dictionary<int, int> outputMap = new Dictionary<int, int>();
             foreach (Recipe recipe in recipes) {
 				foreach(int resourceId in recipe.getOutputs()) {
-                    outputMap[resourceId]++;
+                    if (outputMap.ContainsKey(resourceId)) {
+                        outputMap[resourceId]++;
+                    } else {
+                        outputMap.Add(resourceId, 1);
+                    }
                 }
             }
 			return outputMap;
@@ -200,7 +206,7 @@ namespace Economy {
 				return IndustryRunResult.DISABLED;
 			case IndustryStatus.RUNNING:
 				if(activeRecipe == null) {
-					Debug.Log ("Severe: Active recipe is null as the industry is running!");
+					Debug.LogError ("Severe: Active recipe is null as the industry is running!");
 				}
 				ticks++;
 				if(ticks == recipes[activeRecipe.Value].getRate()) {
@@ -235,12 +241,17 @@ namespace Economy {
 				foreach(int resourceId in recipe.getInputs()) {
 					int resourceStock;
                     if(resourceStockDictionary.TryGetValue(resourceId, out resourceStock)) {
+                        // Insufficient resources
                         if (resourceStock < recipe.getInputRatio(resourceId)) {
                             statusMessage = "Industry Halted. Missing " + resourceId + ".";
                             canRun = false;
                             break;
                         }
-                    } 
+                    } else {
+                        // Missing resources completely
+                        canRun = false;
+                        break;
+                    }
 				}
 				if(canRun) {
 					activeRecipe = recipes.IndexOf(recipe);
@@ -269,7 +280,12 @@ namespace Economy {
 						resourceCount++;
 					}
 				}
-                resourceStockDictionary[resourceId] += resourceCount;
+                int value;
+                if(resourceStockDictionary.TryGetValue(resourceId, out value)) {
+                    resourceStockDictionary[resourceId] += resourceCount;
+                } else {
+                    resourceStockDictionary.Add(resourceId, resourceCount);
+                }
             }
 		}
 		

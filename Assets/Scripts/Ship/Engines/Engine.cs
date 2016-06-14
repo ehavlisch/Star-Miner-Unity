@@ -1,8 +1,7 @@
+using Economy;
 using UnityEngine;
 
-namespace Ship
-{
-	
+namespace Ship { 
 	public class Engine : Cargo {
 		protected float efficiency;
 		protected float force;
@@ -14,16 +13,11 @@ namespace Ship
 		protected string mainSound;
 		protected string ventSound;
 		
-		public Engine(float efficiency, float force, float mass, float forceLat, float forceRotate, float volume, float value, string name) {
+		public Engine(float efficiency, float force, float mass, float forceLat, float forceRotate, float volume, float value, string name) : base(CargoType.ENGINE, mass, volume, name, value, "engine") {
 			this.efficiency = efficiency;
 			this.force = force;
-			this.mass = mass;
 			this.forceLat = forceLat;
 			this.forceRotate = forceRotate;
-			
-			this.volume = volume;
-			this.value = value;
-			this.name = name;
 		}
 
 		public AudioSource getMainSound(GameObject gameObject) {

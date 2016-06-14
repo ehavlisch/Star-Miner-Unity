@@ -8,11 +8,10 @@
         public string description;
         public int rarity;
         public int highStock;
+
+        // Per unit volume / mass
         public int volume;
         public int mass;
-
-        //TODO this needs to work more closely like the cargo class in the pickup controller
-        // specifically, need to add mass and volume
 
         // Resource id needs to be unique among resources or they will be replaced
         public Resource (int id, string name, string description, int baseValue, int rarity, int highStock, int volume, int mass) {

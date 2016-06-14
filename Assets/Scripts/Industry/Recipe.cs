@@ -3,18 +3,13 @@ using System.Text;
 
 namespace Economy {
 
-	public class Recipe {
-		private List<int?> input;
-		private List<int?> output;
-		
+	public class Recipe {		
 		private Dictionary<int, int> inputRatios;
         private Dictionary<int, int> outputRatios;
         private Dictionary<int, int> outputPercents;
 		private int rate;
 		
-		public Recipe(int inputSize, int outputSize, int rate) {
-			input = new List<int?>(inputSize);
-			output = new List<int?>(outputSize);
+		public Recipe(int rate) {
 			inputRatios = new Dictionary<int, int>();
 			outputRatios = new Dictionary<int, int>();
 			outputPercents = new  Dictionary<int, int>();
@@ -22,7 +17,6 @@ namespace Economy {
 		}
 		
 		public void addInputResource(int resourceId, int ratio) {
-			input.Add(resourceId);
             int value;
             if(inputRatios.TryGetValue(resourceId, out value)) {
                 inputRatios[resourceId] += ratio;
@@ -32,7 +26,6 @@ namespace Economy {
 		}
 		
 		public void addOutputResource(int resourceId, int ratio, int percent) {
-			output.Add(resourceId);
             int value;
             if (outputRatios.TryGetValue(resourceId, out value)) {
                 outputRatios[resourceId] += ratio;
@@ -46,22 +39,14 @@ namespace Economy {
 		public string tostring() {
 			StringBuilder sb = new StringBuilder();
 			sb.Append("Input: ");
-			foreach(int? resourceId in input) {
-				sb.Append(resourceId).Append(" ");
+			foreach(KeyValuePair<int, int> entry in inputRatios) {
+				sb.Append(entry.Key).Append("(").Append(entry.Value).Append(") ");
 			}
 			sb.Append(" -> ");
-			foreach(int? resourceId in output) {
-				sb.Append(resourceId).Append(" ");
-			}
-			return sb.ToString();
-		}
-		
-		public List<int?> getInputs() {
-			return input;
-		}
-		
-		public List<int?> getOutputs() {
-			return output;
+			foreach(KeyValuePair<int, int> entry in outputRatios) {
+                sb.Append(entry.Key).Append("(").Append(entry.Value).Append(") ");
+            }
+            return sb.ToString();
 		}
 		
 		public int getInputRatio(int resourceId) {
@@ -86,6 +71,14 @@ namespace Economy {
             outputPercents.TryGetValue(resourceId, out value);
             return value;
 		}
+
+        public List<int> getInputs() {
+            return new List<int>(inputRatios.Keys);
+        }
+
+        public List<int> getOutputs() {
+            return new List<int>(outputRatios.Keys);
+        }
 	}
 
 }

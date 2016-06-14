@@ -19,14 +19,27 @@ public class GameController : MonoBehaviour {
     private Vector3 lastCheckedPosition;
     private float travelThreshold = 10;
 
-
+    private float gameTime = 0;
+    private float startTime = 0;
+    
     void Start() {
-		Debug.Log ("Starting");
+		Debug.Log ("GameController Starting");
 		if (staticRandomSeed) {
+            Debug.LogWarning("Setting static random seed.");
 			Random.seed = 151;
-		}
+		} else {
+            Random.seed = System.DateTime.Now.Millisecond;
+        }
 		if (testMode) {
-            Test.runTests();
+            TestUtils.Instance.startTimer("tests");
+            Debug.Log("GameController Running Tests.");
+            try {
+                Test.runTests();
+            } catch (System.Exception e) {
+                Debug.LogWarning("Errors in tests.");
+                Debug.LogWarning(e.Message + e.StackTrace);
+            }
+            Debug.Log("GameController Finished Tests. " + TestUtils.Instance.endTimer("tests") + "ms elapsed.");
 		}
 		//TODO this should be a landing menu for the game, then put into debug which will automatically start a new game
 
@@ -39,7 +52,11 @@ public class GameController : MonoBehaviour {
 		worldController.printWorldNodes ();
 
         lastCheckedPosition = player.GetComponent<Transform>().position;
+
+        gameTime = 0;
+        startTime = Time.time;
         Debug.Log(lastCheckedPosition);
+        Debug.Log("GameController Start completed.");
 	}
 
 	void FixedUpdate() {
@@ -52,6 +69,7 @@ public class GameController : MonoBehaviour {
             lastCheckedPosition = currentPosition;
             worldController.playerMovementCheck(new IntVector2(lastCheckedPosition));
         }
+        gameTime = Time.time - startTime;
 	}
 
 	void Update() {
@@ -78,4 +96,8 @@ public class GameController : MonoBehaviour {
 			return true;  
 		}
 	}
+
+    public float getGameTime() {
+        return gameTime;
+    }
 }
