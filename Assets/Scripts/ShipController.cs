@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 using Ship;
 using Economy;
+using ship;
 
 public class ShipController : MonoBehaviour {
 
@@ -50,9 +51,9 @@ public class ShipController : MonoBehaviour {
 		fuelTanks.Add (new FuelTank (new FuelType (1.0f, 100.0f), 100.0f, 100.0f, 5.0f, 100.0f, 100.0f, "Basic Fuel Tank", 100.0f));	
 		maxFuel = calculateMaxFuelVolume ();
 
-		engines.Add (new GenericEngine());
-
-		engineAudioSources = new List<AudioSource> (maxEngines);
+		engines.Add (EngineSingleton.Instance.getEngine(0));
+        
+        engineAudioSources = new List<AudioSource> (maxEngines);
 		foreach(Engine engine in engines) {
 			engineAudioSources.Add(engine.getMainSound(gameObject));
 		}
@@ -138,11 +139,13 @@ public class ShipController : MonoBehaviour {
 
 	public void setEngineVolume(float volume) {
 		foreach (AudioSource audioSource in engineAudioSources) {
-			if(audioSource.volume > volume) {
-				audioSource.volume = audioSource.volume - 0.05f;
-			} else {
-				audioSource.volume = volume;
-			}
+            if (audioSource != null) {
+                if (audioSource.volume > volume) {
+                    audioSource.volume = audioSource.volume - 0.05f;
+                } else {
+                    audioSource.volume = volume;
+                }
+            }
 		}
 	}
 
@@ -215,7 +218,7 @@ public class ShipController : MonoBehaviour {
 	public float calculateEngineForce() {
 		float totalForce = 0.0f;
 		foreach (Engine e in engines) {
-			totalForce += e.getForce();
+            totalForce += e.force;
 		}
 		return totalForce;
 	}
@@ -223,7 +226,7 @@ public class ShipController : MonoBehaviour {
 	public float calculateEngineLatForce() {
 		float totalForce = 0.0f;
 		foreach (Engine e in engines) {
-			totalForce += e.getForceLat();
+            totalForce += e.forceLat;
 		}
 		return totalForce;
 	}
@@ -231,7 +234,7 @@ public class ShipController : MonoBehaviour {
 	public float calculateEngineEfficiency() {
 		float totalEff = 0.0f;
 		foreach (Engine e in engines) {
-			totalEff += e.getEfficiency();
+            totalEff += e.efficiency;
 		}
 		return totalEff;
 	}
@@ -239,7 +242,7 @@ public class ShipController : MonoBehaviour {
 	public float calculateEngineRotate() {
 		float totalForce = 0.0f;
 		foreach (Engine e in engines) {
-			totalForce += e.getForceRotate();
+            totalForce += e.forceRotate;
 		}
 		return totalForce;
 	}
@@ -274,103 +277,5 @@ public class ShipController : MonoBehaviour {
 
 	public float getMaxFuel() {
 		return maxFuel;
-	}
-}
-
-public class Generator : Cargo {
-
-	public float maxEnergy;
-	public float rechargeRate;
-
-	public Generator(float mass, float maxEnergy, float rechargeRate, float volume, float value, string name) : base(CargoType.GENERATOR, mass, volume, name, value, "generator") {
-		this.maxEnergy = maxEnergy;
-		this.rechargeRate = rechargeRate;
-	}
-}
-
-public class CargoBay : Cargo {
-
-	public float filledVolume;
-	public List<Cargo> cargo;
-
-	public CargoBay(float volume, float mass, float value, string name) : base(CargoType.CARGO_BAY, mass, volume, name, value, "cargobay") {
-		this.volume = volume;
-		this.mass = mass;
-		this.value = value;
-		this.name = name;
-
-		cargo = new List<Cargo> ();
-	}
-
-	public bool addCargo(Cargo c) {
-		if (filledVolume + c.volume > volume) {
-			return false;
-		} else {
-			cargo.Add (c);
-			filledVolume += c.volume;
-			return true;
-		}
-	}
-
-	public float calculateMass() {
-		float totalMass = mass;
-		foreach(Cargo c in cargo) {
-			totalMass += c.mass;
-		}
-		return totalMass;
-	}
-}
-
-public class FuelTank : Cargo {
-	//d = mass / volume;
-	public FuelType fuelType;
-
-	public float fuelVolume;
-	public float fuelEfficiency;
-
-	public float tankVolume;
-
-	public float tankDurability;
-
-	public FuelTank(FuelType fuelType, float fuelVolume, float tankVolume, float mass, float tankDurability, float volume, string name, float value) : base(CargoType.FUEL_TANK, mass, volume, name, value, "fueltank") {
-		this.fuelType = fuelType;
-		this.fuelVolume = fuelVolume;
-		this.tankVolume = tankVolume;
-		this.tankDurability = tankDurability;
-	}
-	
-	public bool hasFuel() {
-		return fuelVolume > 0;
-	}
-
-	public float subtractFuel(float power) {
-		float volume = power / fuelType.efficiency;
-		if (fuelVolume - volume < 0) {
-			// Drain the tank
-			float remainingPower = fuelVolume * fuelType.efficiency;
-			fuelVolume = 0;
-			return remainingPower;
-		} else {
-			fuelVolume -= volume;
-			return power;
-		}
-	}
-
-	public float getTotalMass() {
-		return fuelType.getMass (fuelVolume) + mass;
-	}
-}
-
-public class FuelType {
-	public float density;
-	public float efficiency;
-
-	public FuelType(float density, float efficiency) {
-		this.density = density;
-		this.efficiency = efficiency;
-	}
-
-	public float getMass(float volume) {
-		return density * volume;
 	}
 }

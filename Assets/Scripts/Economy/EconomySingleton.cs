@@ -14,7 +14,7 @@ namespace Economy {
         public static EconomySingleton Instance {
             get {
                 if(instance == null) {
-                    Debug.Log("Instantiating EconomySingleton.");
+                    //Debug.Log("Instantiating EconomySingleton.");
                     instance = new EconomySingleton();
                 }
                 return instance;
@@ -230,7 +230,8 @@ namespace Economy {
 			}
 			return sum;
 		}
-		
+
+        public static int GEM_STONES = 0;
 		public static int IRON_ORE = 1;
 		public static int RUTILE = 2;
 		public static int TITANIUM_ORE = 3;
@@ -295,7 +296,7 @@ namespace Economy {
 		public static int SUPERALLOY = 60;
 		
 		
-		public static int[] resourcesList = {IRON_ORE, RUTILE, TITANIUM_ORE, NICKEL_ORE, COPPER_ORE, PLATINUM_DUST, SALT, CHLORINE, BAUXITE, SILICON_ORE, ARGON, FERROSILICON, CARBON_MONOXIDE, SULFURIC_ACID, HYDROCHLORIC_ACID, COPPER_REFINED, TITANIUM_REFINED,
+		public static int[] resourcesList = {GEM_STONES, IRON_ORE, RUTILE, TITANIUM_ORE, NICKEL_ORE, COPPER_ORE, PLATINUM_DUST, SALT, CHLORINE, BAUXITE, SILICON_ORE, ARGON, FERROSILICON, CARBON_MONOXIDE, SULFURIC_ACID, HYDROCHLORIC_ACID, COPPER_REFINED, TITANIUM_REFINED,
 			NICKEL_REFINED, IRON_REFINED, STEEL, SODIUM_HYDROXIDE, PLATINUM_REFINED, SILICON_SOLAR, SILICON_ELECTRICAL, PLASTIC, TITAN_PLATINUM, BATTERIES, PLATINUM_BATTERIES, HYDROGEN, CRUDE_OIL, ALUMINUM_ORE, ALUMINUM_REFINED, LASER_SIMPLE,
 			
 			SILVER_ORE, GOLD_ORE, CALCIUM_ORE, OXYGEN, MAGNESIUM_ORE, SULFUR, CARBON, CHROMIUM_ORE, MANGANESE_ORE, NITROGEN, COBALT_ORE, ZINC_ORE, LEAD_ORE, SILVER_REFINED, GOLD_REFINED, CHROMIUM_REFINED, MANGANESE_REFINED, ZINC_REFINED,
@@ -320,10 +321,11 @@ namespace Economy {
 		// Type 3: Deflector + Radiation
 
 		private Resource[] genResources() {
-            // Whoops resources start at 1 
-            Resource[] genResources = new Resource[resourcesList.Length + 1];
+            Resource[] genResources = new Resource[resourcesList.Length];
 
-			Resource r = new Resource(IRON_ORE, "Iron Ore", "A common unrefined ore.", 10, 2, 5000, 50, 50);
+            Resource r = new Resource(GEM_STONES, "Gem Stones", "An assortment of rare gems.", 30, 4, 3000, 50, 50);
+            genResources[r.id] = r;
+			r = new Resource(IRON_ORE, "Iron Ore", "A common unrefined ore.", 10, 2, 5000, 50, 50);
             genResources[r.id] = r;
 			r = new Resource(RUTILE, "Rutile", "A common unrefined mineral. Contains Titanium.", 10, 2, 5000, 50, 50);
 			genResources[r.id] = r;
@@ -836,14 +838,14 @@ namespace Economy {
 
         // Industries that increase planet tier, hospitable, livable values?
 		
-		public String listResourceUses(bool verbose) {
+		public string listResourceUses(bool verbose) {
 			List<Resource> unusedResources = new List<Resource>();
 			StringBuilder s = new StringBuilder();
 			
 			foreach(int resourceId in resourcesList) {
 				Resource resource = resources[resourceId];
 				if(!verbose) {
-                    String resourceName = resource.name;
+                    string resourceName = resource.name;
 					if(resourceName.Length > 15) {
 						resourceName = resourceName.Substring(0, 15);
 						s.Append(resourceName);
@@ -922,7 +924,7 @@ namespace Economy {
 			return s.ToString();
 		}
 
-        public String listResourceRarities() {
+        public string listResourceRarities() {
             StringBuilder sb = new StringBuilder();
             foreach (Resource resource in resources) {
                 if (resource != null && resource.rarity > 0) {

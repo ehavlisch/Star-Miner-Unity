@@ -1,9 +1,8 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 using Events;
 using Economy;
-using Util;
 using System.Collections.Generic;
+using Races;
 
 namespace Tests {
     public class Test {
@@ -14,17 +13,103 @@ namespace Tests {
 
             //testEvents();
             //testEconomySingleton();
-            //sortEventNames();
             //testPlanetInit();
             //testIndustry();
+            //testRandomResource();
+            //testRaceFactory();
+            //testFactionFactory();
+            testFactionRaceIndex();
 
-            Debug.Log(EconomySingleton.Instance.listResourceRarities());
+            // Not quite tests
+            //sortEventNames();
+            //Debug.Log(EconomySingleton.Instance.listResourceRarities());
 
             Random.seed = randomValue;
         }
 
+        private static void testFactionRaceIndex() {
+
+            FactionFactory.getFactionIndex(AresCoalition.NAME);
+
+            FactionFactory.getFactionIndex(UnitedPlanets.NAME);
+
+            RaceFactory.getRaceIndex(Aug.NAME);
+
+            RaceFactory.getRaceIndex(QeThil.NAME);
+
+            RaceFactory.getRaceIndex(PEH.NAME);
+        }
+
+        private static void testFactionFactory() {
+            Debug.Log("Starting testFactionFactory.");
+            Dictionary<string, int> factionCounts = new Dictionary<string, int>();
+            factionCounts.Add(UnitedPlanets.NAME, 0);
+            factionCounts.Add(AresCoalition.NAME, 0);
+            factionCounts.Add(NoFaction.NAME, 0);
+
+            Race race = RaceFactory.getRace(PEH.NAME);
+
+            for (int i = 0; i < 10000; i++) {
+                Faction faction = FactionFactory.getFaction(race);
+                factionCounts[faction.getName()] += 1;
+            }
+
+            if(factionCounts[UnitedPlanets.NAME] <= 0) {
+                Debug.LogWarning("Faction Factory return 0 instances of United Planets for the PEH race.");
+            }
+            if (factionCounts[AresCoalition.NAME] <= 0) {
+                Debug.LogWarning("Faction Factory return 0 instances of AresCoalition for the PEH race.");
+            }
+            if (factionCounts[NoFaction.NAME] <= 0) {
+                Debug.LogWarning("Faction Factory return 0 instances of NoFaction for the PEH race.");
+            }
+
+
+            Debug.Log("Finished testFactionFactory.");
+        }
+
+        private static void testRaceFactory() {
+            Debug.Log("Starting testRaceFactory.");
+            Race qeThil = RaceFactory.getRace(QeThil.NAME);
+            if(qeThil == null) {
+                Debug.LogError("Test Failed: Unable to find known race.");
+            }
+            Race peh = RaceFactory.getRace(PEH.NAME);
+            if(peh == null) {
+                Debug.LogError("Test Failed: Unable to find known race.");
+            }
+
+            Race race = RaceFactory.getRace();
+            if(race == null) {
+                Debug.LogError("Test Failed: Unable to find random race.");
+            }
+
+            HashSet<string> uniqueNames = new HashSet<string>();
+
+            int count = 0;
+            while(count < 10000) {
+                if (!uniqueNames.Add(race.generateName())) {
+                    break;
+                }
+                count++;
+            }
+            Debug.Log("Reached " + count + " before generating a duplicate name for the " + race.getName() + " race.");
+            Debug.Log("Finished testRaceFactory.");
+
+        }
+
         private static void sortEventNames() {
-            EventFactory.sortIds();
+            Debug.Log("Starting sortEventNames.");
+            string ids = EventFactory.sortIds(AugStrings.names);
+
+            Debug.Log(ids);
+
+            ids = EventFactory.sortIds(AugStrings.designations);
+
+            Debug.Log(ids);
+            // System.IO.File.WriteAllText(@"WriteText.txt", ids);
+
+            Debug.Log("Finished sortEventNames.");
         }
 
         private static void testEvents() {
@@ -123,6 +208,28 @@ namespace Tests {
             }
 
             Debug.Log("Finished testIndustry.");
+        }
+
+        public static void testRandomResource() {
+            Debug.Log("Starting testRandomResource.");
+
+
+            for (int i = 0; i < 100; i++) {
+                Resource resource = EconomySingleton.Instance.getRandomResource(0.5f);
+
+                if (resource.rarity < 0 || resource.rarity > 4) {
+                    Debug.LogWarning("Random resource was out of expected range based on it's value.");
+                }
+            }
+
+            for(int i = 0; i < 100; i++) {
+                Resource resource = EconomySingleton.Instance.getRandomResource(0.99f);
+
+                if(resource.rarity < 6 || resource.rarity > 9) {
+                    Debug.LogWarning("Random resource was out of expected range based on it's value.");
+                }
+            }
+            Debug.Log("Finished testRandomResource.");
         }
     }
 }

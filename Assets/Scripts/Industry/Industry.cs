@@ -155,7 +155,7 @@ namespace Economy {
 			statusMessage = "Industry Restarting.";
 		}
 
-		public string toString() {
+		public string tostring() {
 			StringBuilder sb = new StringBuilder(name);
 			sb.Append(":\n");
 			foreach(Recipe recipe in recipes) {

@@ -34,10 +34,10 @@ public class WorldController : MonoBehaviour {
 
     // Lists of the objects - 
     // TODO should be in a higher class and shared
-    private ArrayList asteroids { get; set; }
-    private ArrayList planets { get; set; }
-    private ArrayList stars { get; set; }
-    private Dictionary<String, GameObject> pickups;
+    private ArrayList asteroids;
+    private ArrayList planets;
+    private ArrayList stars;
+    private Dictionary<string, GameObject> pickups;
     private GameObject defaultPickup;
 
     public void generateWorld() {
@@ -69,7 +69,7 @@ public class WorldController : MonoBehaviour {
 
         // TODO load a bunch of different looking resource pickups here for the different types
         // need to handle: 'weapon', 'generator', 'engine', 'resource' + id, 'cargobay', 'fueltank'
-        pickups = new Dictionary<String, GameObject>();
+        pickups = new Dictionary<string, GameObject>();
         // TODO Resource.Load something there for the default pickup.
         defaultPickup = new GameObject();
 	}
@@ -117,7 +117,7 @@ public class WorldController : MonoBehaviour {
 		loadAdjacentChunks(Direction.NONE);
 	}
 
-    public GameObject getPickup(String name) {
+    public GameObject getPickup(string name) {
         GameObject result;
         if(pickups.TryGetValue(name, out result)) {
             return result;
@@ -405,15 +405,18 @@ public class WorldController : MonoBehaviour {
 		int halfSpreadSize = chunkSize * chunkSpread / 2;
 		//		System.out.println("Relative Center: " + relativeLocation);
 		IntVector2 actualCenter = new IntVector2(relativeLocation.x * worldNodeSize, relativeLocation.y * worldNodeSize);
-		//		System.out.println("Actual Center: " + actualCenter);
-		//		System.out.println("Generating objects from: " + (actualCenter.x - halfSpreadSize) + " to " + (actualCenter.x + halfSpreadSize) + ".");
-		//		System.out.println("Generating objects from: " + (actualCenter.y - halfSpreadSize) + " to " + (actualCenter.y + halfSpreadSize) + ".");
+        //		System.out.println("Actual Center: " + actualCenter);
+        //		System.out.println("Generating objects from: " + (actualCenter.x - halfSpreadSize) + " to " + (actualCenter.x + halfSpreadSize) + ".");
+        //		System.out.println("Generating objects from: " + (actualCenter.y - halfSpreadSize) + " to " + (actualCenter.y + halfSpreadSize) + ".");
+        int worldObjectCount = 0;
 
 		for(int i = 0; i < chunkSize; i++) {
 			for(int j = 0; j < chunkSize; j++) {
 				float value = worldNode.getMapChunk().map[i, j];
-					// Instantiate or something
-				if(value >= .45 && value <= .55) {
+                // Make this a property of a world node or something so chunks can be more empty or more full
+                int scarcity = 2;
+                int secondDigit = ((int) (value * 100)) % 10;
+                if(secondDigit >= scarcity && secondDigit <= (10 - scarcity)) { 
 
 					float randomX = UnityEngine.Random.Range(-1.0f, 1.0f) * chunkSpread / 2;
 					float randomZ = UnityEngine.Random.Range(-1.0f, 1.0f) * chunkSpread / 2;
@@ -427,9 +430,12 @@ public class WorldController : MonoBehaviour {
 					asteroid.setLocation(new IntVector2(i, j));
 					asteroid.setValue(value);
 					asteroid.setWorld (this);
-				}
+
+                    worldObjectCount++;
+                }
 			}
 		}
+        //Debug.Log("Created " + worldObjectCount + "/" + (chunckSize * chunkSize) + " ojbects.");
 	}
 
 	private IntVector2 shift(int shiftRight, int shiftDown, IntVector2 location) {

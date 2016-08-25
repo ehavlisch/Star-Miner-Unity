@@ -1,5 +1,4 @@
-﻿
-namespace Economy {
+﻿namespace Economy {
     class ResourceCargo : Cargo {
 
         Resource resource;

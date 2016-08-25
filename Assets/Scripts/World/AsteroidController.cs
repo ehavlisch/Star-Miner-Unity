@@ -88,7 +88,6 @@ public class AsteroidController : MonoBehaviour {
 					//Physics.IgnoreCollision(gameObject.GetComponent<Collider>(), asteroid.GetComponent<Collider>());
 				}
 			} else {
-				Debug.Log ("IMPLEMENT: Asteroid destroyed - spawn loot");
                 Cargo cargo = spawnAsteroidLoot();
                 GameObject pickupObject = (GameObject) Instantiate(world.getPickup(cargo.pickupName), gameObject.transform.position, gameObject.transform.rotation);
                 pickupObject.transform.parent = transform.parent;

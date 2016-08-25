@@ -40,7 +40,7 @@ namespace Triggers {
 			this.worldObjects = worldObjects;
 		}
 		
-		public string toString() {
+		public string tostring() {
 			return triggerName;
 		}
 		

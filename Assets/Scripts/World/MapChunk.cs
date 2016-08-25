@@ -231,11 +231,11 @@ public class MapChunk {
 		filled = true;
         UnityEngine.Random.seed = revertSeed;
 
-        StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < 9; i++) {
-            sb.Append("Bucket[" + i + "]=" + buckets[i] + "\n");
-        }
-        Debug.Log(sb.ToString());
+        //StringBuilder sb = new StringBuilder();
+        //for(int i = 0; i < 9; i++) {
+        //   sb.Append("Bucket[" + i + "]=" + buckets[i] + "\n");
+        //}
+        //Debug.Log(sb.ToString());
 
         return size * size;
 	}

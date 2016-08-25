@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using Events;
+using Util;
 
 namespace Dialogues {
 	public class Dialogue {
@@ -30,10 +31,10 @@ namespace Dialogues {
 		public string getMessage() {
 			if(loop) {
 				string currentMessage = message;
-				message = EventFactory.getRandomString(loopResponses);
+				message = Utils.getMember(loopResponses);
 
 				options.Remove(loopOption);
-				loopOption = new EventOption(loopOption.getOptionLabel(), EventFactory.getRandomString(loopMessages), this);
+				loopOption = new EventOption(loopOption.getOptionLabel(), Utils.getMember(loopMessages), this);
 				options.Add(loopOption);
 				
 				return currentMessage;
@@ -55,7 +56,7 @@ namespace Dialogues {
 		
 		public void setupLoop(string repeatLabel, string[] loopMessages, string[] loopResponses) {
 			options = new List<EventOption> ();
-			loopOption = new EventOption(repeatLabel, EventFactory.getRandomString(loopMessages), this);
+			loopOption = new EventOption(repeatLabel, Utils.getMember(loopMessages), this);
 			options.Add(loopOption);
 			this.loopResponses = loopResponses;
 			this.loopMessages = loopMessages;

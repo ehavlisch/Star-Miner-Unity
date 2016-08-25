@@ -10,7 +10,7 @@ public class IntVector2 {
 		this.y = y;
 	}
 	
-	public string Tostring () {
+	public override string ToString () {
 		return "(" + x + ", " + y + ")";
 	}
 

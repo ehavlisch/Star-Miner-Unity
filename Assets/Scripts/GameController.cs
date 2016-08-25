@@ -48,14 +48,14 @@ public class GameController : MonoBehaviour {
 
 		worldController.generateWorld ();
 
-		worldController.printWorld ();
-		worldController.printWorldNodes ();
+		//worldController.printWorld ();
+		//worldController.printWorldNodes ();
 
         lastCheckedPosition = player.GetComponent<Transform>().position;
 
         gameTime = 0;
         startTime = Time.time;
-        Debug.Log(lastCheckedPosition);
+        //Debug.Log(lastCheckedPosition);
         Debug.Log("GameController Start completed.");
 	}
 

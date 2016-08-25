@@ -3,18 +3,21 @@ using UnityEngine;
 
 namespace Ship { 
 	public class Engine : Cargo {
-		protected float efficiency;
-		protected float force;
-		
-		protected float forceLat;
-		protected float forceRotate;
+        public int engineId;
+        // Higher efficiency is better
+        public float efficiency;
+        public float force;
 
-		// Optional stuff
-		protected string mainSound;
-		protected string ventSound;
+        public float forceLat;
+        public float forceRotate;
+
+        // Optional stuff
+        public string mainSound;
+        public string ventSound;
 		
-		public Engine(float efficiency, float force, float mass, float forceLat, float forceRotate, float volume, float value, string name) : base(CargoType.ENGINE, mass, volume, name, value, "engine") {
-			this.efficiency = efficiency;
+		public Engine(int engineId, float efficiency, float force, float mass, float forceLat, float forceRotate, float volume, float value, string name) : base(CargoType.ENGINE, mass, volume, name, value, "engine") {
+            this.engineId = engineId;
+            this.efficiency = efficiency;
 			this.force = force;
 			this.forceLat = forceLat;
 			this.forceRotate = forceRotate;
@@ -31,29 +34,6 @@ namespace Ship {
 			} else {
 				return null;
 			}
-		}
-		
-		public float getForce() {
-			return force;
-		}
-		
-		public float getForceLat() {
-			return forceLat;
-		}
-		
-		public float getEfficiency() {
-			return efficiency;
-		}
-		
-		public float getForceRotate() {
-			return forceRotate;
-		}
-	}
-
-	public class GenericEngine : Engine {
-		
-		public GenericEngine() : base (100, 1600, 80, 800, 60, 100, 1000, "Generic Engine") {
-			this.mainSound = "Audio/Ship/Engine/loopEngine1";
 		}
 	}
 }
